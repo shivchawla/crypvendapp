@@ -4,7 +4,8 @@ const path = require('path')
 const semver = require('semver')
 const _ = require('lodash/fp')
 const minimist = require('minimist')
-const Rx = require('rxjs/Rx')
+// const Rx = require('rxjs/Rx')
+const Rx = require('rxjs')
 const pify = require('pify')
 const pDelay = require('delay')
 const pAny = require('p-any')
@@ -99,6 +100,8 @@ const Brain = function (config) {
   }
 
   this.billValidator = this.loadBillValidator()
+
+  console.log(this.billValidator);
 
 
 
@@ -202,6 +205,25 @@ Brain.prototype.processPending = function processPending () {
   console.log('Processing pending txs...')
   return db.prune(this.dbRoot, txs => this.prunePending(txs))
     .catch(err => console.log(err.stack))
+}
+
+Brain.prototype.selectBillValidatorClass = function selectBillValidatorClass () {
+  if (commandLine.mockBillValidator) return require('./mocks/id003')
+
+  // if (this.rootConfig.billValidator.deviceType === 'cashflowSc') {
+  //   return require('./mei/cashflow_sc')
+  // }
+
+  // if (this.rootConfig.billValidator.deviceType === 'ccnet') {
+  //   return require('./ccnet/ccnet')
+  // }
+
+  return require('./id003/id003');
+}
+
+Brain.prototype.loadBillValidator = function loadBillValidator () {
+  const billValidatorClass = this.selectBillValidatorClass()
+  return billValidatorClass.factory(this.rootConfig.billValidator)
 }
 
 

@@ -1,0 +1,1 @@
+1. Metro.config,js has to be modified to prevent duplicated as web directoy includes node_modules and it was leading to duplicates to node_modules

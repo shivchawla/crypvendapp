@@ -1,112 +1,89 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow strict-local
- */
 
-import React from 'react';
-import type {Node} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+global.Buffer = require('buffer/').Buffer;
+window.process = { cwd: () => '' , env: {NODE_ENV: 'development'}, version: ""};
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+import React, {Component} from 'react';
+import Router from './src/ui/router';
+import { AppState} from 'react-native';
+import Keyguard from 'react-native-keyguard';
 
-const Section = ({children, title}): Node => {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-};
+import './config-i18n';
 
-const App: () => Node = () => {
-  const isDarkMode = useColorScheme() === 'dark';
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+import actionEmitter from './src/lib/action-emitter';   
+
+class App extends Component {
+
+  constructor(props) {
+    super(props)
+    this.state = {appState: AppState.currentState, pinSuccess: false};
+  }
+
+  componentDidMount() {
+    console.log("App.js - componentWillMount()")
+    AppState.addEventListener("change", this._handleAppStateChange);
+    actionEmitter.on('removeAppStateChange', () => {
+      AppState.removeEventListener("change", this._handleAppStateChange);  
+    })
+
+    actionEmitter.on('addAppStateChange', () => {
+      AppState.addEventListener("change", this._handleAppStateChange);  
+    })
+  }
+
+  componentWillUnmount() {
+    console.log("App.js - componentWillUnmount()")
+    AppState.removeEventListener("change", this._handleAppStateChange);
+  }
+
+  _proceedToPincode = (nextAppState) => {
+    console.log("In Proceed to pincode");
+    Keyguard
+    .unlock("Enter you pin", "Are you sure?")
+    .then(() => {
+      console.log("Success"); 
+      this.setState({appState: nextAppState});    
+    })
+    .catch(error => {
+      console.log("Error ", err);
+    })
+  }
+
+  _handleAppStateChange = (nextAppState) => {
+    
+    const {appState, pinSuccess} = this.state;
+
+    console.log('Current App State: ' + appState);
+    console.log('Next App State: ' + nextAppState);
+
+    if (appState != nextAppState) {
+      if (appState.match(/inactive|background/) 
+            && nextAppState === 'active') {
+        console.log(
+          'App State: ' +
+          'App has come to the foreground!'
+        );
+
+          this._proceedToPincode(nextAppState)
+      }  else {
+        console.log("Setting state to background");
+        this.setState({appState: nextAppState});
+      }
+    }
   };
 
-  return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.js</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
+
+  render() {
+    const {appState} = this.state;
+    console.log("In render");
+    console.log(appState);
+
+    return (
+      <Router />
+    );
+  }
 };
 
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
-
 export default App;
+
+

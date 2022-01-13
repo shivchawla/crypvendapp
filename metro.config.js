@@ -5,6 +5,9 @@
  * @format
  */
 
+const exclusionList = require('metro-config/src/defaults/exclusionList');
+// const exclusionList = require('metro-config/src/defaults/blacklist');
+
 module.exports = {
   transformer: {
     getTransformOptions: async () => ({
@@ -13,5 +16,12 @@ module.exports = {
         inlineRequires: true,
       },
     }),
+  },
+  resolver: {
+    extraNodeModules: require('node-libs-react-native'),
+    blacklistRE: exclusionList([
+      /\/android\/.*/,
+      /\/ios\/.*/,
+    ])
   },
 };

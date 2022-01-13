@@ -15,5 +15,10 @@
     "wpa": {
       "socket": null
     }
+  },
+  "billValidator":{
+    "rs232": {
+      "device": "/dev/bus/usb/001/001"
+    }
   }
 }
