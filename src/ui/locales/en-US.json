@@ -1,0 +1,205 @@
+{
+   "chooseCoin": {
+        "title": "Select the cryptocurrency",
+   },
+   "compliance": {
+        "title": "Compliance Request",
+        "smsVerification":{
+            "subTitle":"SMS Verification",
+            "message":"We need customer's mobile phone to register. Customer will receive an OTP to confirm the number."
+        },
+        "idVerification": {
+            "subTitle": "ID Verification",
+            "message":"We need the identity document (DPI/License/Passport) of the customer to confirm the Identity. Is that ok?"
+        },
+        "photoVerification": {
+            "subTitle":"Photo Verification", 
+            "message": "We need to take a picture of customer's face to match with your identity document and to comply with local laws. Is this ok?",
+        }
+    },
+    "identityVerification": {
+        "title": "Identity Verification",
+        "document": {
+            "subTitle": "Identification Document",
+            "instructionText": "To continue, please take a photo of DPI, License or Passport of the client",
+        },
+        "photo":{
+            "subTitle": "Face Photo",
+            "instructionText": "To continue, take a photo of the customer's face",
+        },
+    },
+    "status":{
+        "startTransaction": "Starting Transaction",
+        "initialize": "Initializing",
+        "pairing": "Pairing Device",
+        "checkingLimits": "Checking Limits",
+        "sendingCode":"Sending security code",
+        "sendingCoins": "Sending Coins",
+        "validatingAddress": "Validating Address",
+        "validatingCode": "Validating Security Code",
+        "processing": "Processing",
+    },
+    "enterFiat": {
+        "title": "Select the Fiat Amount",
+    },
+    "initialize":{
+        "title": "WELCOME",
+        "message_1":"Congratulations!!. Welcome to your new QuieroCripto POS",
+        "message_2":"Press initialize to generate a secure cryptographic certificate for your machine.",
+        "warningMessage": "*This could take about fifteen minutes."
+    },
+    "pairingScan":{
+        "title" :"Pair with remote server",
+        "message": "Press SCAN and present the machine with the pairing QR code from your remote server.",
+    },
+    "previewPurchase": {
+        "title": "Review the purchase",
+        "message": "Review the customer's transaction before proceeding",
+    },
+    "registerPhone": {
+        "title": "Register Client's Mobile number",
+        "message": "Add customer's phone number to register. Customer will receive an OTP to confirm"
+    },
+    "requestConfirmation": {
+        "cvvScreen": {
+            "title": "Confirm CVV",
+            "message": "Confirm your card by typing your CVV (3 or 4 digit code in the back side of the card)"
+        },
+        "creditCard": {
+            "title": "Insert or swipe credit/debit card",
+            "message": "Please swipe or insert credit/debit card of user to complete payment",
+        },
+        "creditCardAgain": {
+            "title": "Insert or swipe credit/debit card again",
+            "message": "Oops! There was a problem. Please swipe or insert credit/debit card again of user to complete payment",
+        },
+        "review": {
+            "title": "Customer Transaction Review",
+            "message": "Pídale al cliente que revise la transacción antes de continuar",
+        },
+
+    },
+    "scanAddress": {
+        "title": "Scan the Wallet Address",
+        "message": "Ask the customer to show his wallet address (QR code)"
+    },
+    "securityCode": {
+        "title": "Confirm Telephone",
+        "message": "Confirm customer's phone number with OTP",
+    },
+    "splash": {
+        "tagline": "Buy cryptocurrency fast and easy",
+    },
+    "transactionSuccess": {
+        "title": "Your purchase was successful!"            
+    },
+    "selectLanguage": {
+        "title": "Select Language"
+    },
+    "transactionList": {
+        "title": "Transaction History", 
+        "noTransactions": "No transactions found" 
+    },
+    "transaction": {
+        "customer": "Customer",
+        "session": "Session",
+        "crypto": "Crypto", 
+        "rate": "Rate", 
+        "address": "Address", 
+        "txId": "Transaction ID",
+        "status": "Status",
+        "fiat": "Amount",
+        "date": "Date"
+    },
+    "buttonText": {
+        "proceed": "PROCEED",
+        "startScan": "START SCAN",
+        "scan": "SCAN",
+        "scanAgain": "SCAN AGAIN", 
+        "tryAgain": "TRY AGAIN",
+        "next": "NEXT",
+        "initialize": "INITIALIZE",
+        "takePhoto": "TAKE PHOTO",
+        "cancel":"CANCEL",
+        "accept": "ACCEPT",
+        "takeAgain": "TAKE AGAIN", 
+        "proceedScan": "PROCEED TO SCAN",
+        "proceedPay":"PROCEED TO PAY",
+        "confirmPay": "CONFIRM PAYMENT",
+        "printReceipt": "PRINT RECEIPT",
+        "newTransactin": "NEW TRANSACTION",
+        "startAgain" : "START AGAIN",
+        "language": "Language",
+        "transactions": "Transactions",
+        "goBack": "GO BACK",
+    },
+    "errorMessage": {
+        "transactionLimit": {
+            "title": "Transaction limit reached",
+        },
+        "validatorError": {
+            "title": "Error in validation",
+        },
+        "lowBalance": {
+            "title": "We're out of coins!",
+            "mesage": "Sorry but we are running low on coins. Try Again later!!"
+        },
+        "blockedCustomer": {
+            "title":"Transaction limit reached",
+            "message": "Due to local regulations, you've reached your transaction limit",
+        },
+        "noInternet": {
+            "title": "No Internet Connection",
+            "message": "You are not connected to the Internet. Check your internet connection and try again!"
+        },
+        "networkDown": {
+            "title": "Server Down",
+            "message": "Oops! Our servers are down currently. We will back soon."
+        },
+        "pairingDevice":{
+            "title": "Error Pairing Device",
+            "message": "We experienced an error when attempting to pair the device. Try Again!"
+        },
+        "addressReuse":{
+            "title": "Address already used once",
+            "message":"For both your privacy and safety against scams, please generate a new one from your wallet and scan that one instead.",
+        },
+        "printingError": {
+            "title": "Error Printing Receipt",
+            "message": "Please contact the operator to fix the problem"
+        },
+        "badSecurityCode": {
+            "title": "Incorrect OTP",
+            "message": "You entered incorrect OTP to confirm your phone. Start Again"
+        },
+        "paymentError": {
+            "title": "Error Processing Payment",
+            "message": "We encountered an error processing payment with your card. Try Again!"
+        }
+
+    },
+    "permissions": {
+        "ok": "Yes",
+        "cancel": "Cancel",
+        "camera" :{
+            "title":"Permission to use camera",
+            "message": "We need your permission to use your camera",
+        },
+        "audio": {
+            "title":"Permission to use audio recording",
+            "message": "We need your permission to use your audio",   
+        },
+        "goback": {
+            "title": "Hold on!",
+            "message": "Application will go to home screen. Are your sure?",
+        },
+        "shutdown": {
+            "title": "Hold on!",
+            "message": "Application will shutdown. Are your sure?",
+        }
+    },
+    "language": {
+        "en": "English",
+        "es": "Spanish"
+    }
+}

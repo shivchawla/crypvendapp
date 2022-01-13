@@ -1,0 +1,207 @@
+{
+   "chooseCoin": {
+        "title": "Selecciona la Moneda",
+   },
+   "compliance": {
+        "title": "Solicitud de Cumplimiento",
+        "smsVerification":{
+            "subTitle":"Verificación por SMS",
+            "message":"Necesitamos el teléfono móvil del cliente para registrarse. El cliente recibirá una OTP para confirmar el número."
+        },
+        "idVerification": {
+            "subTitle": "Verificación de Identificación",
+            "message":"Necesitamos el documento de identidad (DPI / Licencia / Pasaporte) del cliente para confirmar la Identidad. ¿Está bien?"
+        },
+        "photoVerification": {
+            "subTitle":"Photo Verification", 
+            "message": "Necesitamos tomar una foto del rostro del cliente para que coincida con su documento de identidad y para cumplir con las leyes locales. ¿Esta bien?",
+        }
+    },
+    "identityVerification": {
+        "title": "Verificación de Identidad",
+        "document": {
+            "subTitle": "Documento de Identification",
+            "instructionText": "Para continuar, tome una foto de DPI, Licencia o Pasaporte del cliente",
+        },
+        "photo":{
+            "subTitle": "Foto de la cara",
+            "instructionText": "Para continuar, tome una foto del rostro del cliente.",
+        },
+    },
+    "status":{
+        "startTransaction": "Inicializando Transacción",
+        "initialize": "Inicializando el Dispositivo",
+        "pairing": "Emparejando el Dispositivo",
+        "checkingLimits": "Revisión de Límites",
+        "sendingCode":"Envío de OTP",
+        "sendingCoins": "Envío de Criptomonedas",
+        "validatingAddress": "Validando la Dirección",
+        "validatingCode": "Validando OTP",
+        "processing": "Procesando",
+    },
+    "enterFiat": {
+        "title": "Selecciona el Monto",
+    },
+    "initialize":{
+        "title": "BIENVENIDOS",
+        "message_1":"¡Felicidades!. Bienvenido a tu nuevo POS de QuieroCripto",
+        "message_2":"Presione inicializar para generar un certificado criptográfico seguro para su máquina",
+        "warningMessage": "*Esto puede tardar hasta quince minutos"
+    },
+    "pairingScan":{
+        "title" :"Emparejar con Servidor Remoto",
+        "message": "Presione SCAN y presente a la máquina el código QR de emparejamiento de su servidor remoto",
+    },
+    "previewPurchase": {
+        "title": "Revisa la compra",
+        "message": "Revise la transacción del cliente antes de continuar",
+    },
+    "registerPhone": {
+        "title": "Registrar el número de móvil del cliente",
+        "message": "Agregue el número de teléfono del cliente para registrarse. El cliente recibirá una OTP para confirmar"
+    },
+    "requestConfirmation": {
+        "cvvScreen": {
+            "title": "Confirmar CVV",
+            "message": "Confirme su tarjeta escribiendo su CVV (código de 3 o 4 dígitos en el reverso de la tarjeta)"
+        },
+        "creditCard": {
+            "title": "Insertar o deslizar la tarjeta",
+            "message": "Deslice o inserte la tarjeta de crédito / débito del usuario para completar el pago.",
+        },
+        "creditCardAgain": {
+            "title": "Insert or swipe credit/debit card again",
+            "message": "Oops! There was a problem. Please swipe or insert credit/debit card again of user to complete payment",
+        },
+        "review": {
+            "title": "Revisar La Transaccíon",
+            "message": "Revise la transacción del cliente antes de continuar",
+        },
+
+    },
+    "scanAddress": {
+        "title": "Escanea La Dirección",
+        "message": "Pídale al cliente que muestre la dirección de su billetera (código QR)"
+    },
+    "securityCode": {
+        "title": "Confirmar OTP",
+        "message": "Confirme el número de teléfono del cliente con OTP",
+    },
+    "splash": {
+        "tagline": "Compra criptomoneda rápido y fácil",
+    },
+    "transactionSuccess": {
+        "title": "¡Tu compra se ha realizado con éxito!"            
+    },
+    "selectLanguage": {
+        "title": "Seleccione el Idioma"
+    },
+    "transactionList": {
+        "title": "Todas las transacciones",
+        "noTransactions":"No se encontraron transacciones"
+    },
+    "transaction": {
+        "customer": "Cliente",
+        "session": "Sesión",
+        "crypto": "Criptomoneda", 
+        "rate": "Tasa", 
+        "address": "Dirección", 
+        "txId": "ID de Transacción",
+        "status": "Status",
+        "fiat": "Monto",
+        "date": "Fecha"
+    },
+    "buttonText": {
+        "proceed": "CONTINUAR",
+        "startScan": "INICIAR ESCANEO",
+        "scan": "ESCANEO",
+        "scanAgain": "ESCANEA OTRA VEZ", 
+        "tryAgain": "INTENTAR OTRA VEZ",
+        "next": "SIGUIENTE",
+        "initialize": "INICIALIZAR",
+        "takePhoto": "TOMAR FOTO",
+        "cancel":"CANCELAR",
+        "accept": "ACCEPTAR",
+        "takeAgain": "TOMAR OTRA VEZ", 
+        "proceedScan": "PROCEDER A ESCANEAR",
+        "proceedPay":"PROCEDER A PAGAR",
+        "confirmPay": "CONFIRMAR PAGO",
+        "printReceipt": "IMPRIMIR RECIBO",
+        "newTransactin": "NUEVA TRANSACCIÓN",
+        "startAgain" : "EMPEZAR DE NUEVO",
+        "language": "Idioma",
+        "transactions": "Transacciones",
+        "goBack": "REGRESA",
+    },
+    "errorMessage": {
+        "transactionLimit": {
+            "title": "Se alcanzó el límite de transacciones",
+            "message": ""
+        },
+        "validatorError": {
+            "title": "Error en la validación",
+            "message": ""
+        },
+        "lowBalance": {
+            "title": "¡Nosotros estamos sin monedas!",
+            "message": "Lo sentimos, pero nos estamos quedando sin monedas. ¡Inténtalo de nuevo más tarde!"
+        },
+        "blockedCustomer": {
+            "title":"Se alcanzó el límite de transacciones",
+            "message": "Debido a las regulaciones locales, ha alcanzado su límite de transacciones",
+        },
+        "noInternet": {
+            "title": "Sin Conexión a Internet",
+            "message": "No estás conectado a Internet. Compruebe su conexión a Internet y vuelva a intentarlo"
+        },
+        "networkDown": {
+            "title": "Servidor Inactivo",
+            "message": "¡Oops! Nuestros servidores están inactivos. ¡Volveremos pronto!"
+        },
+        "pairingDevice":{
+            "title": "Error al emparejar el dispositivo",
+            "message": "Tuvimos un error al intentar emparejar el dispositivo. ¡Intentar otra vez!"
+        },
+        "addressReuse":{
+            "title": "Dirección ya utilizada una vez",
+            "message":"Tanto para su privacidad como para su seguridad contra las estafas, genere una nueva desde su billetera y escanee esa en su lugar",
+        },
+        "printingError": {
+            "title": "Error al Imprimir el Recibo",
+            "message": "Comuníquese con el operador para solucionar el problema."
+        },
+        "badSecurityCode": {
+            "title": "OTP Incorrecta",
+            "message": "Ingresaste una OTP incorrecta para confirmar tu teléfono. Comenzar de nuevo"
+        },
+        "paymentError": {
+            "title": "Error Pago",
+            "message": "Encontramos un error al procesar el pago con su tarjeta. ¡Intentar otra vez!"
+        }
+
+    },
+    "permissions": {
+    	"ok": "Si",
+        "cancel": "Cancelar",
+        "camera" :{
+            "title":"Permiso para usar la cámara",
+            "message": "Necesitamos su permiso para usar su cámara.",
+        },
+        "audio": {
+            "title":"Permiso para usar la grabación de audio",
+            "message": "Necesitamos su permiso para usar su audio",   
+        },
+        "goback": {
+        	"title": "¡Espera!",
+            "message": "La aplicación irá a la pantalla de inicio. ¿Estás seguro?",
+        },
+        "shutdown": {
+        	"title": "¡Espera!",
+            "message": "La aplicación se cerrará. ¿Estás seguro?",
+        }
+    },
+    "language": {
+        "en": "Inglés",
+        "es": "Español"
+    }
+}

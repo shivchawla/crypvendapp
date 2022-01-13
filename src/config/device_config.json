@@ -1,0 +1,19 @@
+{
+  "brain": {
+    "freeMemRatio": 0.01,
+    "powerStatus": null,
+    "dataPath": "data",
+    "wifiConfigPath": null,
+    "mockCryptoQR": {
+      // "BTC": "bc1qamfrcyurew0zzegwtgv8k04x045w5cquqcew94",
+      "BTC": "1LEBU9C6y2MaMmuTtJbDDCWpEJxTaT8Dt1",
+    },
+    "mockCameraImage": "mock_data/compliance/license.jpg"
+  },
+  "cryptomatModel": "gaia",
+  "wifi": {
+    "wpa": {
+      "socket": null
+    }
+  }
+}
