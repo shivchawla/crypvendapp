@@ -130,13 +130,23 @@ android {
 
     compileSdkVersion rootProject.ext.compileSdkVersion
 
+    sourceSets { 
+        main { assets.srcDirs = ['../../web']}
+    }
+
     defaultConfig {
         applicationId "com.crypvendapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+        missingDimensionStrategy 'react-native-camera', 'general' // <--- insert this line
     }
+
+    configurations {
+        compile.exclude group: 'com.google.zxing'
+    }
+
     splits {
         abi {
             reset()
@@ -215,6 +225,9 @@ dependencies {
     } else {
         implementation jscFlavor
     }
+
+    implementation project(':react-native-fs')
+    implementation project(':react-native-camera')
 }
 
 // Run this once to be able to run the application with BUCK
