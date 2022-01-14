@@ -1,13 +1,17 @@
 'use strict'
 
-// var SerialPort = require('serialport')
-var SerialPort = require('react-native-usb-serialport').SerialPort;
+var SerialPortAPI = require('react-native-usb-serialport');
+var {RNSerialport: SerialPort, definitions: SerialDefs, actions:SerialEvents} = SerialPortAPI;
+
+import { NativeEventEmitter, NativeModules } from 'react-native';
+
 var EventEmitter = require('events').EventEmitter
 var util = require('util')
 // var fs = require('fs')
 var RNFS = require('react-native-fs')
 var async = require('async')
 var Crc = require('./crc')
+const Buffer = require('buffer/').Buffer;
 
 var Id003Rs232 = function (config, denominations) {
   EventEmitter.call(this)
@@ -18,6 +22,9 @@ var Id003Rs232 = function (config, denominations) {
   this.serial = null
   this.denominations = denominations
   this.commands = []
+
+  // console.log("Setting Up Id003Rs232");
+
 }
 
 util.inherits(Id003Rs232, EventEmitter)
@@ -93,6 +100,8 @@ var REJECTION_REASONS = {
 
 Id003Rs232.prototype._open = function _open (device, cb) {
   var self = this
+
+  //Inc 
   var options = {
     baudRate: 9600,
     parity: 'even',
@@ -102,23 +111,87 @@ Id003Rs232.prototype._open = function _open (device, cb) {
     rtscts: false
   }
 
-  var serial = new SerialPort(device, options)
+  const eventEmitter = new NativeEventEmitter();
+  eventEmitter.addListener(SerialEvents.ON_ERROR, (err) => {
+    console.log("Serial Open Error"); self.emit('error', err); 
+    cb(err);
+  });
 
-  this.serial = serial
+  eventEmitter.addListener(SerialEvents.ON_CONNECTED, (device) => {
+    console.log("Serial Port Connected successfully");
+    cb();
+  });  
 
-  serial.on('error', function (err) { self.emit('error', err) })
-  serial.on('open', function (err) {    
-if (err) return cb(err)
-console.log("Serial Open successfully");0
-    serial.on('readable', function () { console.log("Redable Message"); self._process(serial.read()) })
-    serial.on('close', function () {
-      self.emit('disconnected')
-    })
-    self.lightOff()
-    cb()
-  })
+  eventEmitter.addListener(SerialEvents.ON_READ_DATA, (data) => {
+    // console.log("Redable Message"); 
+    // console.log(data);
 
-  serial.open()
+    // console.log("To Buffer")
+    // console.log(Buffer.from(data.payload, 'hex'));
+
+    // console.log("To NODE Buffer");
+    // console.log(toNodeBuffer(Buffer.from(data.payload, 'hex')));
+
+    self._process(Buffer.from(data.payload, 'hex'))
+  }); 
+
+  eventEmitter.addListener(SerialEvents.ON_DISCONNECTED, () => {
+    self.emit('disconnected')
+  });   
+
+
+  // SerialPort.on('onError', function (err) { console.log("Serial Open Error"); self.emit('error', err) })
+  // SerialPort.on('onConnected', function (err) {    
+  //   if (err) return cb(err)
+  //   console.log("Serial Open successfully");0
+  //   SerialPort.on('onReadDataFromPort', function (data) { console.log("Redable Message"); self._process(data) })
+  //   SerialPort.on('onDisconnected', function () {
+  //     self.emit('disconnected')
+  //   })
+  //   self.lightOff()
+  //   cb()
+  // })
+
+
+  // var serial = new SerialPort(device, options)
+
+  //In-case of android module, only baudrate input is allowed
+  //Other settingscan be modified by set functions/ -- see JAVA code below for default values
+  // private int DATA_BIT     = UsbSerialInterface.DATA_BITS_8;  --SAME
+  // private int STOP_BIT     = UsbSerialInterface.STOP_BITS_1; -- SAME
+  // private int PARITY       =  UsbSerialInterface.PARITY_NONE; -- DIFFERENT
+  // private int FLOW_CONTROL = UsbSerialInterface.FLOW_CONTROL_OFF;
+  // private int BAUD_RATE = 9600;  -- SAME
+
+  SerialPort.startUsbService();
+
+  SerialPort.getDeviceList()
+  .then(devices => {
+      console.log(devices);
+  });
+
+
+  SerialPort.setReturnedDataType(SerialDefs.RETURNED_DATA_TYPES.HEXSTRING);
+  SerialPort.setAutoConnect(false);
+  SerialPort.setParity(SerialDefs.PARITIES.PARITY_EVEN);
+
+  // this.serial = SerialPort;
+
+  // SerialPort.on('onError', function (err) { console.log("Serial Open Error"); self.emit('error', err) })
+  // SerialPort.on('onConnected', function (err) {    
+  //   if (err) return cb(err)
+  //   console.log("Serial Open successfully");0
+  //   SerialPort.on('onReadDataFromPort', function (data) { console.log("Redable Message"); self._process(data) })
+  //   SerialPort.on('onDisconnected', function () {
+  //     self.emit('disconnected')
+  //   })
+  //   self.lightOff()
+  //   cb()
+  // })
+
+  // serial.open()
+  SerialPort.connectDevice(device, options.baudRate);
+
 }
 
 Id003Rs232.prototype.open = function open (cb) {
@@ -151,22 +224,28 @@ Id003Rs232.prototype.send = function send (command) {
   if (!codes) throw new Error('Invalid command: ' + command)
   var length = codes.length + 4
   var payload = [SYNC].concat(length, codes)
-  var buf = new Buffer(payload)
+  var buf = new Buffer(payload, 'hex');
   var crc = Crc.compute(payload)
   var crcBuf = new Buffer(2)
   crcBuf.writeUInt16LE(crc, 0)
   var outBuf = Buffer.concat([buf, crcBuf], length)
-console.log(command);
-console.log(outBuf);
-  this.serial.write(outBuf)
+  
+  // console.log("Writing to RS232");
+
+  // if (command != 'status' ) {
+    // console.log("Send Command:", command);
+    // console.log(outBuf.toString('hex'));
+  // }
+
+  SerialPort.writeHexString(this.config.device, outBuf.toString('hex').toUpperCase());
 }
 
 Id003Rs232.prototype.close = function close (cb) {
-  this.serial.close(cb)
+  SerialPort.close(cb)
 }
 
 Id003Rs232.prototype.lightOn = function lightOn () {
-  var serial = this.serial
+  var serial = SerialPort
 
   serial.set({rts: true}, function (err) {
     if (err) console.log('lightOn failed: %s', err)
@@ -174,7 +253,7 @@ Id003Rs232.prototype.lightOn = function lightOn () {
 }
 
 Id003Rs232.prototype.lightOff = function lightOff () {
-  var serial = this.serial
+  var serial = SerialPort
 
   serial.set({rts: false}, function (err) {
     if (err) console.log('lightOff failed: %s', err)
@@ -200,14 +279,32 @@ Id003Rs232.prototype._crcVerify = function _crcVerify (payload) {
 }
 
 Id003Rs232.prototype._parse = function _parse (packet) {
+
+  // console.log("Parsing Packet");
+  // console.log(packet);
+
   this._crcVerify(packet)
   var data = packet.length === 5 ? null : packet.slice(3, -2)
+
+  // console.log("Data");
+  // console.log(data);
   var commandCode = packet[2]
+
+  // console.log("Command Code", commandCode);
+
+
+
   this._interpret(commandCode, data)
 }
 
 Id003Rs232.prototype._interpret = function _interpret (commandCode, rawData) {
   var command = RSP[commandCode]
+
+  // if (command != 'enq') {
+    // console.log("Response Command: ", command);
+    // console.log(rawData);
+    // console.log(rawData ? rawData.toString('hex') : rawData);
+  // }
 
   if (!command) {
     this.emit('unknownCommand', commandCode)
@@ -268,6 +365,10 @@ Id003Rs232.prototype._version = function _version (rawData) {
 }
 
 Id003Rs232.prototype._process = function _process (data) {
+
+  // console.log(this.buf);
+  // console.log(data);
+
   this.buf = Buffer.concat([this.buf, data])
   while (this._processPacket()) {}
 }
@@ -275,6 +376,10 @@ Id003Rs232.prototype._process = function _process (data) {
 Id003Rs232.prototype._processPacket = function _processPacket () {
   if (this.buf.length === 0) return
   this.buf = this._acquireSync(this.buf)
+  
+  // console.log("After _acquireSync");
+  // console.log(this.buf);
+  // console.log(this.buf.length);
 
   // Wait for size byte
   if (this.buf.length < 2) return
@@ -288,6 +393,7 @@ Id003Rs232.prototype._processPacket = function _processPacket () {
   this.buf = this.buf.slice(responseSize)
 
   try {
+    // console.log("Parse Packet");
     this._parse(packet)
   } catch (ex) {
     console.dir(ex)

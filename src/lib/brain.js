@@ -64,6 +64,12 @@ const NETWORK_TIMEOUT_INTERVAL = 20000
 const MIN_WAITING = 500
 const STATUS_QUERY_TIMEOUT = 2000
 
+// console.log("Serial Port");
+// var SerialPort = require('react-native-serial-port-api').default;
+var SerialPort = require('react-native-usb-serialport').RNSerialport;
+
+// console.log(SerialPort);
+
 const Brain = function (config) {
   if (!(this instanceof Brain)) return new Brain(config)
 
@@ -99,11 +105,38 @@ const Brain = function (config) {
     config.billDispenser.device = determineDevicePath(config.billDispenser.device)
   }
 
-  this.billValidator = this.loadBillValidator()
+  this.billValidator = this.loadBillValidator();
 
   console.log(this.billValidator);
 
+this.billValidator.on('error', function (err) { console.log(err) })
+this.billValidator.on('disconnected', function () { console.log('Disconnnected') })
+this.billValidator.on('billAccepted', function () { console.log('Bill accepted') })
+this.billValidator.on('billRead', function (data) { console.log('Bill read') })
+this.billValidator.on('billValid', function () { console.log('Bill valid') })
+this.billValidator.on('billRejected', function () { console.log('Bill rejected') })
+this.billValidator.on('timeout', function () { console.log('Bill timeout') })
+this.billValidator.on('standby', function () { console.log('Standby') })
+this.billValidator.on('jam', function () { console.log('jam') })
+this.billValidator.on('stackerOpen', function () { console.log('Stacker open') })
+this.billValidator.on('enabled', function (data) { console.log('Enabled') })
 
+var bv = this.billValidator
+bv.run(function (err) {
+  console.log("Running Bill Validator");
+
+  if (err) {
+    console.log("WTF-- What is the error?")
+    console.log(err)
+    process.exit(1);
+  } else {
+    console.log("ENABLing!!!");
+    setTimeout(function () { bv.enable() }, 5000)
+    console.log('success.')
+  }
+})
+
+  return;
 
   this._setState(INITIAL_STATE)
   this.tx = null
@@ -364,7 +397,25 @@ Brain.prototype.checkWifiStatus = function checkWifiStatus () {
 Brain.prototype._init = function init () {
   // this._initWifiEvents();
   this._initBrainEvents()
+  // this._initBillValidatorEvents();
   this._initActionEvents()
+}
+
+Brain.prototype._initBillValidatorEvents = function _initBillValidatorEvents () {
+  const self = this
+  const billValidator = this.billValidator
+
+  billValidator.on('error', function (err) { self._billValidatorErr(err) })
+  billValidator.on('disconnected', function () { self._billValidatorErr() })
+  billValidator.on('billAccepted', function () { self._billInserted() })
+  billValidator.on('billRead', function (data) { self._billRead(data) })
+  billValidator.on('billValid', function () { self.updateBillScreen() })
+  billValidator.on('billRejected', function () { self._billRejected() })
+  billValidator.on('timeout', function () { self._billTimeout() })
+  billValidator.on('standby', function () { self._billStandby() })
+  billValidator.on('jam', function () { self._billJam() })
+  billValidator.on('stackerOpen', function () { self._stackerOpen() })
+  billValidator.on('enabled', function (data) { self._billsEnabled(data) })
 }
 
 Brain.prototype._initWifiEvents = function _initWifiEvents () {
@@ -1296,6 +1347,7 @@ Brain.prototype.activate = async function activate () {
   
   console.log("Running Trade Poller")  
   return this.traderRun()
+  .then(() => this.initValidator())
 
 }
 
@@ -1365,6 +1417,22 @@ Brain.prototype.initTrader = async function initTrader () {
   await this.activate()
 
   return true
+}
+
+Brain.prototype.initValidator = function initValidator () {
+  console.log('Waiting for server...')
+  const h = setInterval(() => {
+    if (_.isNil(this.fiatCode)) return
+
+    clearInterval(h)
+
+    this.billValidator.setFiatCode(this.fiatCode)
+
+    return this.billValidator.run(err => {
+      if (err) return this._billValidatorErr(err)
+      console.log('Bill validator connected.')
+    })
+  }, 200)
 }
 
 Brain.prototype._idle = function _idle (locale) {

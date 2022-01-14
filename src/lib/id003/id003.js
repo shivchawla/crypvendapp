@@ -10,7 +10,7 @@ const BN = require('../bn')
 
 const Id003 = function (config) {
 
-  console.log("ID003");
+  // console.log("ID003");
   
   EventEmitter.call(this)
   this.initialized = false
@@ -48,8 +48,8 @@ Id003.prototype.lightOff = function lightOff () {
 
 Id003.prototype.run = function run (cb) {
   this.id003Fsm = Id003Fsm.factory(this.config)
- console.log("Running");  	
-this._run(cb)
+  console.log("Running");  	
+  this._run(cb)
 }
 
 Id003.prototype._run = function _run (cb) {
@@ -60,16 +60,17 @@ console.log(config);
   const rs232Config = config.rs232
   rs232Config.fiatCode = config.fiatCode
 
-  this.disablePolling = false
+  this.disablePolling = false; //--Modified
+
+  console.log("Setting up RS232 device");
+  console.log(rs232Config);
+
 
   this.rs232 = Rs232.factory(rs232Config, this.denominations)
 
 console.log(this.rs232);
 
   this.rs232.on('message', function (cmd, data) {
-	console.log("RS232 Message");
-console.log(cmd);
-console.log(data);
 
     // TODO: temp, handle commands better (probably use fsm)
     if (cmd === 'invalid') {
@@ -166,15 +167,15 @@ console.log(data);
   })
 
   this.rs232.open(function (err) {
-	console.log("RS2323 open");
+	  console.log("RS2323 open");
     if (err) return cb(err)
 
     self._startPolling()
-
     self.id003Fsm.connect()
 
     const t0 = Date.now()
     const denominationsInterval = setInterval(function () {
+
       if (self.hasDenominations()) {
         clearInterval(denominationsInterval)
         return cb()
@@ -261,6 +262,9 @@ Id003.prototype._send = function _send (command, data) {
   // timeout because last poll could have been at now minus 1ms
   // potentially sending a new request before getting the response
   setTimeout(() => {
+    // if (command != 'status') {
+      // console.log("Sending Request to RS232: ", command);
+    // }
     this.rs232.send(command, data)
     // we only want polling before going to interrupt mode
     if (!this.disablePolling) {
