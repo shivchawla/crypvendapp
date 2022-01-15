@@ -1,7 +1,7 @@
 const _ = require('lodash/fp')
 const Pdf417Parser = require('../compliance/parsepdf417')
 const { utils: coinUtils } = require('lamassu-coins')
-const RNFS = require('react-native-fs')
+const RNFS = require('react-native-file-access')
 const path = require('path')
 
 module.exports = {
@@ -51,7 +51,7 @@ async function scanMainQR (cryptoCode, callback) {
     if (!mockData.qrDataSource) {
       forward(null, mockData.qrData[cryptoCode])
     } else {
-      return RNFS.readFile(RNFS.DocumentDirectoryPath, mockData.qrDataSource)
+      return RNFS.FileSystem.readFile(RNFS.Dirs.DocumentDir, mockData.qrDataSource)
       .then(output => {
         forward(null, output);
       })

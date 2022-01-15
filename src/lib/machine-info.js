@@ -1,6 +1,6 @@
 const pify = require('pify')
-const RNFS = require('react-native-fs')
-const writeFile = RNFS.writeFile
+const RNFS = require('react-native-file-access')
+const writeFile = RNFS.FileSystem.writeFile
 const path = require('path')
 const _ = require('lodash/fp')
 
@@ -9,9 +9,9 @@ function save (dataPath, machineInfo) {
   return writeFile(path.resolve(dataPath, 'machine-info.json'), JSON.stringify(machineInfo))
 }
 
-function load (dataPath) {
+async function load (dataPath) {
   try {
-    return JSON.parse(RNFS.readFileSync(path.resolve(dataPath, 'machine-info.json')))
+    return JSON.parse(await RNFS.FileSystem.readFile(path.resolve(dataPath, 'machine-info.json')))
   } catch (err) {
     return { active: false }
   }

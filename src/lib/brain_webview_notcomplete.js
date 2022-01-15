@@ -1,5 +1,5 @@
-//const fs = require('react-native-fs');
-var RNFS = require('react-native-fs');
+//const fs = require('react-native-file-access');
+var RNFS = require('react-native-file-access');
 
 // const cp = require('child_process')
 const os = require('os')
@@ -81,7 +81,7 @@ const Brain = function (config) {
   // ExternalStorageDirectoryPath
   // DocumentDirectoryPath
   // this.dataPath = RNFS.ExternalStorageDirectoryPath + '/Android/data/com.crypvendapp/files/'; //path.resolve(__dirname, '..', this.config.dataPath)
-  this.dataPath = path.resolve(RNFS.DocumentDirectoryPath); //path.resolve(__dirname, '..', this.config.dataPath)
+  this.dataPath = path.resolve(RNFS.Dirs.DocumentDir); //path.resolve(__dirname, '..', this.config.dataPath)
 
   console.log("Data Path");
   console.log(this.dataPath);
@@ -455,7 +455,7 @@ Brain.prototype._init = function init () {
   this._initActionEvents()
 }
 
-// Brain.prototype._initHearbeat = function _initHeartbeat () {
+// Brain.prototype._initHearbeat = async function _initHeartbeat () {
 //   let pingIntervalPtr
 
 //   const heartbeatServer = net.createServer(function (c) {
@@ -475,7 +475,7 @@ Brain.prototype._init = function init () {
 //     }, 5000)
 //   })
 
-//   try { fs.unlinkSync('/tmp/heartbeat.sock') } catch (ex) {}
+//   try { await fs.unlink('/tmp/heartbeat.sock') } catch (ex) {}
 //   heartbeatServer.listen('/tmp/heartbeat.sock', function () {
 //     console.log('server bound')
 //   })
@@ -1042,11 +1042,11 @@ Brain.prototype._setupWebcam = function _setupWebcam () {
   if (!fs.existsSync(rootPath)) return
 
   const subdirs = fs.readdirSync(rootPath)
-  subdirs.forEach(function (dir) {
+  subdirs.forEach(async function (dir) {
     if (dir.indexOf('2-1') === 0) {
       const autosuspendPath = rootPath + '/' + dir + '/power/autosuspend'
       try {
-        fs.writeFileSync(autosuspendPath, '-1')
+        await fs.writeFile(autosuspendPath, '-1')
       } catch (ex) {
         // File doesn't exist, that's ok.
       }

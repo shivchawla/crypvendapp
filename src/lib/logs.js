@@ -2,7 +2,7 @@
 
 const path = require('path')
 const _ = require('lodash/fp')
-const RNFS = require('react-native-fs')
+const RNFS = require('react-native-file-access')
 // const fs = require('pify')(nodeFs)
 
 const dataPath = require('./data-path')
@@ -28,7 +28,7 @@ const ONE_MB = Math.pow(1024, 2)
  * @returns {array} Array of log filenames that exceed the timetamp provided
  */
 function getNewestLogFiles (timestamp) {
-  return RNFS.readdir(logsPath).then(files => {
+  return RNFS.FileSystem.ls(logsPath).then(files => {
     const time = timestamp.slice(0, 10)
     return _.filter(filename => filename.slice(0, 10) >= time && filename.slice(-3) === 'log', files)
   })
@@ -49,7 +49,7 @@ function getNewestLogFiles (timestamp) {
  * @returns {array} Array of log filenames that are older than the timetamp provided
  */
 function getOlderLogFiles (timestamp) {
-  return RNFS.readdir(logsPath).then(files => {
+  return RNFS.FileSystem.ls(logsPath).then(files => {
     const time = timestamp.slice(0, 10)
     return _.filter(filename => {
       return filename.slice(0, 10) <= time || filename.slice(0, 3) === 'old'
@@ -62,7 +62,7 @@ function removeLogFiles (timestamp) {
   return getOlderLogFiles(timestampISO)
     .then(files => {
       return Promise.all(_.map(filename => {
-        return RNFS.unlink(path.resolve(logsPath, filename))
+        return RNFS.FileSystem.unlink(path.resolve(logsPath, filename))
       }, files))
     })
 }
@@ -103,7 +103,7 @@ function queryNewestLogs (_last) {
           if (it['size'] > ONE_MB) {
             return RNFS.rename(filePath, rotatedPath).then(() => [])
           }
-          return RNFS.readFile(filePath).then(fileData => fileData.toString().split('\n'))
+          return RNFS.FileSystem.readFile(filePath).then(fileData => fileData.toString().split('\n'))
         })
       }, files))
     })

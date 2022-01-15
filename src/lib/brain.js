@@ -1,4 +1,4 @@
-var RNFS = require('react-native-fs');
+var RNFS = require('react-native-file-access');
 const os = require('os')
 const path = require('path')
 const semver = require('semver')
@@ -81,7 +81,8 @@ const Brain = function (config) {
   // ExternalStorageDirectoryPath
   // DocumentDirectoryPath
   // this.dataPath = RNFS.ExternalStorageDirectoryPath + '/Android/data/com.crypvendapp/files/'; //path.resolve(__dirname, '..', this.config.dataPath)
-  this.dataPath = path.resolve(RNFS.DocumentDirectoryPath); //path.resolve(__dirname, '..', this.config.dataPath)
+  this.dataPath = path.resolve(RNFS.Dirs.DocumentDir); //path.resolve(__dirname, '..', this.config.dataPath)
+  console.log("DataPath: ", this.dataPath);
 
   //Cert path not required  
    this.certPath = {
@@ -109,35 +110,6 @@ const Brain = function (config) {
 
   console.log(this.billValidator);
 
-this.billValidator.on('error', function (err) { console.log(err) })
-this.billValidator.on('disconnected', function () { console.log('Disconnnected') })
-this.billValidator.on('billAccepted', function () { console.log('Bill accepted') })
-this.billValidator.on('billRead', function (data) { console.log('Bill read') })
-this.billValidator.on('billValid', function () { console.log('Bill valid') })
-this.billValidator.on('billRejected', function () { console.log('Bill rejected') })
-this.billValidator.on('timeout', function () { console.log('Bill timeout') })
-this.billValidator.on('standby', function () { console.log('Standby') })
-this.billValidator.on('jam', function () { console.log('jam') })
-this.billValidator.on('stackerOpen', function () { console.log('Stacker open') })
-this.billValidator.on('enabled', function (data) { console.log('Enabled') })
-
-var bv = this.billValidator
-bv.run(function (err) {
-  console.log("Running Bill Validator");
-
-  if (err) {
-    console.log("WTF-- What is the error?")
-    console.log(err)
-    process.exit(1);
-  } else {
-    console.log("ENABLing!!!");
-    setTimeout(function () { bv.enable() }, 5000)
-    console.log('success.')
-  }
-})
-
-  return;
-
   this._setState(INITIAL_STATE)
   this.tx = null
   this.permissionsGiven = {}
@@ -152,6 +124,8 @@ bv.run(function (err) {
   this.hasConnected = false
   this.localeInfo = this.config.locale.localeInfo
   this.dirtyScreen = false
+  this.billValidatorErrorFlag = false
+
   this.startDisabled = false
   this.testModeOn = false
   this.uiCassettes = null
@@ -273,7 +247,7 @@ Brain.prototype.run = async function run() {
   // console.log("Run: Certpath", this.certPath );
   this.clientCert = await pairing.getCert(this.certPath);
 
-  // console.log("Run: ClientCert", this.clientCert);
+  console.log("Run: ClientCert", this.clientCert);
 
   if (!this.clientCert) {
     // console.log("Run: When client State is null")
@@ -378,26 +352,11 @@ Brain.prototype.checkWifiStatus = function checkWifiStatus () {
   //This is called here to prevent wificonnected being called before prior setup
   this._initWifiEvents(); //this will immediately call wificonnecte if connected
 
-  // NetInfo.fetch('wifi')
-  // .then(state => {
-  //   if(state.isConnected) {
-  //     self.config.ip = state.details.ipAddress;
-  //     self._wifiConnected()
-  //     return
-  //   } else {
-  //     self._wifiConnecting()
-  //   }
-  // })
-  // .catch(err => {
-  //    console.log(err.stack)
-  // })
-
 }
 
 Brain.prototype._init = function init () {
-  // this._initWifiEvents();
   this._initBrainEvents()
-  // this._initBillValidatorEvents();
+  this._initBillValidatorEvents();
   this._initActionEvents()
 }
 
@@ -411,7 +370,7 @@ Brain.prototype._initBillValidatorEvents = function _initBillValidatorEvents () 
   billValidator.on('billRead', function (data) { self._billRead(data) })
   billValidator.on('billValid', function () { self.updateBillScreen() })
   billValidator.on('billRejected', function () { self._billRejected() })
-  billValidator.on('timeout', function () { self._billTimeout() })
+  billValidator.on('timeout', function () { self._billTimeout() }) // -- Not handled in original code either
   billValidator.on('standby', function () { self._billStandby() })
   billValidator.on('jam', function () { self._billJam() })
   billValidator.on('stackerOpen', function () { self._stackerOpen() })
@@ -420,18 +379,6 @@ Brain.prototype._initBillValidatorEvents = function _initBillValidatorEvents () 
 
 Brain.prototype._initWifiEvents = function _initWifiEvents () {
   const self = this
-
-  // this.wifi.on('scan', function (res) {
-  //   self.wifis = res
-  //   self.browser().send({wifiList: res})
-  // })
-
-  // this.wifi.on('connected', function () {
-  //   if (self.state === 'wifiList') {
-  //     self.wifi.stopScanning()
-  //     self._wifiConnected()
-  //   }
-  // })
 
   console.log("_initWifiEvents: Subscribe to WIFI Events");
   NetInfo.addEventListener(state => {
@@ -1353,7 +1300,7 @@ Brain.prototype.activate = async function activate () {
 
 Brain.prototype._pair = function _pair (totem) {
   const self = this
-  // console.log("WTF");
+  console.log("_Pair");
   this._transitionState('pairing')
 
   const model = platformDisplay()
@@ -2510,9 +2457,124 @@ Brain.prototype._firstBill = function _firstBill () {
   })
 
   //There in no bill validator in POS - sp then??
-  // this.enableBillValidator()
+  this.enableBillValidator()
 
   this._screenTimeout(() => this._idle(), this.config.billTimeout)
+}
+
+// Bill validating states
+
+Brain.prototype._billInserted = function _billInserted () {
+  emit('billValidatorAccepting')
+  browserEmit({action: 'acceptingBill'})
+  this._setState('billInserted')
+}
+
+Brain.prototype.enableBillValidator = function enableBillValidator () {
+  emit('billValidatorPending')
+  this.billValidator.enable()
+}
+
+Brain.prototype.disableBillValidator = function disableBillValidator () {
+  emit('billValidatorOff')
+  this.billValidator.disable()
+}
+
+Brain.prototype._billRead = function _billRead (data) {
+  const billValidator = this.billValidator
+
+  if (!_.includes(this.state, BILL_ACCEPTING_STATES)) {
+    console.trace('Attempting to reject, not in bill accepting state.')
+    return billValidator.reject()
+  }
+
+  this.insertBill(data.denomination)
+
+  // Current inserting bill
+  const currentBill = this.bill.fiat
+
+  // Current transaction's fiat not including current bill
+  const fiatBeforeBill = this.tx.fiat
+
+  // Total fiat inserted including current bill
+  const fiatAfterBill = fiatBeforeBill.add(currentBill)
+
+  // Limit next bills by failed compliance value
+  // if value is null it was triggered by velocity or consecutive days
+  const failedTierThreshold = _.isNil(this.failedCompliance) ? BN(Infinity) : BN(this.failedComplianceValue || 0)
+
+  // Available cryptocurrency balance expressed in fiat not including current bill
+  const remainingFiatToInsert = BN.klass.min(this.balance(), failedTierThreshold).sub(fiatBeforeBill)
+
+  // Minimum allowed transaction
+  const minimumAllowedTx = this.tx.minimumTx
+
+  if (remainingFiatToInsert.lt(currentBill)) {
+    billValidator.reject()
+
+    const highestBill = billValidator.highestBill(remainingFiatToInsert)
+
+    if (highestBill.lte(0)) {
+      console.log('DEBUG: low balance, attempting disable')
+      this.disableBillValidator()
+      browserEmit({
+        sendOnly: true,
+        cryptoCode: this.tx.cryptoCode
+      })
+
+      return
+    }
+
+    browserEmit({
+      action: 'highBill',
+      highestBill: highestBill.toNumber(),
+      reason: 'lowBalance'
+    })
+
+    return
+  }
+
+  if (fiatAfterBill.lt(minimumAllowedTx)) {
+    billValidator.reject()
+
+    const lowestBill = billValidator.lowestBill(minimumAllowedTx)
+
+    browserEmit({
+      action: 'minimumTx',
+      lowestBill: lowestBill.toNumber()
+    })
+
+    return
+  }
+
+  const amount = fiatBeforeBill.add(currentBill)
+  const triggerTx = { fiat: amount, direction: this.tx.direction}
+
+  const nonCompliantTiers = this.nonCompliantTiers(this.trader.triggers, this.customerTxHistory, triggerTx)
+  const isCompliant = _.isEmpty(nonCompliantTiers)
+
+  // If threshold is 0,
+  // the sms verification is being handled at the beginning of this.startScreen.
+  if (!isCompliant) {
+    // Cancel current bill
+    this.billValidator.reject()
+
+    // If id tier force another verification screen
+    const nonCompliantTier = _.head(nonCompliantTiers)
+    const idTier = nonCompliantTier === 'idCardData' || nonCompliantTier === 'idCardPhoto'
+    if (idTier) return this.transitionToVerificationScreen(nonCompliantTier)
+
+    return this.runComplianceTiers(nonCompliantTiers)
+  }
+
+  browserEmit({
+    action: 'acceptingBill',
+    readingBill: currentBill.toNumber()
+  })
+
+  this._setState('billRead')
+
+  billValidator.stack()
 }
 
 
@@ -2796,6 +2858,33 @@ Brain.prototype._finalizeSale = function _finalizeSale (cardData) {
  
 }
 
+//IMPORTANT - a copy of this function is called finalizeSale for Credit Card Purchase
+Brain.prototype.updateBillScreen = function updateBillScreen (blockedCustomer) {
+  const bill = this.bill
+
+  // No going back
+  this.clearBill()
+  this.lastRejectedBillFiat = BN(0)
+
+  emit('billValidatorPending')
+
+  var billUpdate
+  // BACKWARDS_COMPATIBILITY 7.5.0-beta.1
+  const serverVersion = this.trader.serverVersion
+  if (!serverVersion || semver.lt(serverVersion, '7.5.0-beta.1')) {
+    billUpdate = Tx.billUpdateDeprecated(bill)
+  } else {
+    billUpdate = Tx.billUpdate(bill)
+  }
+
+  return this.fastUpdateTx(billUpdate)
+    .then(() => {
+      this._transitionState('acceptingBills', { tx: this.tx })
+      this._screenTimeout(() => this._sendCoins(), this.config.billTimeout)
+    })
+    .then(() => this.completeBillHandling(blockedCustomer))
+}
+
 // TODO: clean this up
 Brain.prototype._billRejected = function _billRejected () {
   const self = this
@@ -2823,6 +2912,24 @@ Brain.prototype._billRejected = function _billRejected () {
   browserEmit(response)
 }
 
+
+Brain.prototype._billStandby = function _billStandby () {
+  if (this.state === 'acceptingBills' || this.state === 'acceptingFirstBill') {
+    this.enableBillValidator()
+  }
+}
+
+Brain.prototype._billJam = function _billJam () {
+  // TODO FIX: special screen and state for this
+  browserEmit({action: 'networkDown'})
+}
+
+Brain.prototype._billsEnabled = function _billsEnabled (data) {
+  console.log('Bills enabled codes: 0x%s, 0x%s', data.data1.toString(16),
+    data.data2.toString(16))
+}
+
+Brain.prototype._stackerOpen = function _stackerOpen () {}
 
 Brain.prototype._uiCredit = function _uiCredit () {
   var updatedBill
@@ -2962,7 +3069,7 @@ Brain.prototype._doSendCoins = function _doSendCoins () {
   return this._executeSendCoins()
 }
 
-// This keeps trying until success
+// This keeps trying until success ------ POS MODIFIED CODE
 Brain.prototype._executeSendCoins = function _executeSendCoins () {
   
   console.log("in _executeSendCoins");  
@@ -3159,6 +3266,147 @@ Brain.prototype._unpair = function _unpair () {
   this._setState('unpaired')
   browserEmit({action: 'unpaired'})
 }
+
+
+Brain.prototype._billValidatorErr = function _billValidatorErr (err) {
+  const self = this
+  if (!err) err = new Error('Bill Validator error')
+
+  if (this.billValidatorErrorFlag) return // Already being handled
+
+  if (this.tx && this.tx.bills.length > 0) {
+    this.billValidatorErrorFlag = true
+    this.disableBillValidator() // Just in case. If error, will get throttled.
+    browserEmit({credit: this._uiCredit(), sendOnly: true, reason: 'validatorError'})
+    return
+  }
+
+  if (this.powerDown) return
+
+  //TODO -- when billValidator Fails, should we move to maintenance mode
+  //self._transitionState('maintenance')
+
+  //How to handle bill validator error  -  TODO????
+  // setTimeout(function () { self.emit('error', err) }, 15000)
+}
+
+Brain.prototype._getFiatButtonResponse = function _getFiatButtonResponse () {
+  const tx = this.tx
+  const cassettes = this.trader.cassettes
+  const virtualCassettes = this.trader.virtualCassettes
+
+  const txLimit = getAmountToHardLimit(this.trader.triggers, this.customerTxHistory, tx)
+  const activeDenominations = Tx.computeCashOut(tx, cassettes, virtualCassettes, txLimit)
+
+  return {tx, activeDenominations}
+}
+
+Brain.prototype._chooseFiat = function _chooseFiat () {
+  const amount = this.complianceAmount()
+  const triggerTx = { fiat: amount, direction: 'cashOut'}
+
+  const nonCompliantTiers = this.nonCompliantTiers(this.trader.triggers, this.customerTxHistory, triggerTx)
+  const isCompliant = _.isEmpty(nonCompliantTiers)
+
+  if (!isCompliant) {
+    return this.smsCompliance()
+  }
+
+  const txId = this.tx.id
+  const cryptoCode = this.tx.cryptoCode
+  const coin = _.find(['cryptoCode', cryptoCode], this.trader.coins)
+
+  const updateRec = {
+    direction: 'cashOut',
+    fiatCode: this.fiatCode,
+    commissionPercentage: BN(coin.cashOutCommission).div(100),
+    rawTickerPrice: BN(coin.rates.bid)
+  }
+
+  const update = _.assignAll([this.tx, updateRec])
+
+  this.tx = Tx.update(this.tx, update)
+
+  const response = this._getFiatButtonResponse()
+  if (response.activeDenominations.isEmpty) return this._timedState('outOfCash')
+
+  this._transitionState('chooseFiat', {chooseFiat: response})
+  const self = this
+  this.dirtyScreen = false
+  const interval = setInterval(function () {
+    const doClear = self.state !== 'chooseFiat' ||
+      self.tx.id !== txId
+    if (doClear) return clearInterval(interval)
+
+    const isDirty = self.dirtyScreen
+    self.dirtyScreen = false
+    if (isDirty) return
+    clearInterval(interval)
+    self._idle()
+  }, 120000)
+}
+
+Brain.prototype._chooseFiatCancel = function _chooseFiatCancel () {
+  this._idle()
+}
+
+Brain.prototype._fiatButtonResponse = function _fiatButtonResponse () {
+  this.dirtyScreen = true
+  const response = this._getFiatButtonResponse()
+  browserEmit({fiatCredit: response})
+}
+
+Brain.prototype._fiatButton = function _fiatButton (data) {
+  const denomination = parseInt(data.denomination, 10)
+  const tx = this.tx
+
+  const buttons = this._getFiatButtonResponse()
+  const cryptoCode = tx.cryptoCode
+
+  // We should always have enough available if the button could be pressed,
+  // just double-checking
+
+  if (buttons.activeDenominations.activeMap[denomination]) {
+    // BACKWARDS_COMPATIBILITY 7.5.1
+    const serverVersion = this.trader.serverVersion
+    if (!serverVersion || semver.lt(serverVersion, '7.5.1-beta.0')) {
+      const rate = this.trader.rates(cryptoCode).cashOut
+      this.tx = Tx.addCashDeprecated(denomination, rate, this.tx)
+    } else {
+      this.tx = Tx.addCash(denomination, this.tx)
+    }
+  }
+
+  this._fiatButtonResponse()
+}
+
+Brain.prototype._clearFiat = function _clearFiat () {
+  const tx = this.tx
+
+  tx.fiat = BN(0)
+  tx.cryptoAtoms = BN(0)
+
+  this._fiatButtonResponse()
+}
+
+Brain.prototype._sendSecurityCode = function _sendSecurityCode (number) {
+  const self = this
+
+  return this.trader.phoneCode(number)
+    .then(result => {
+      this.currentPhoneNumber = number
+      this.currentSecurityCode = result.code
+    })
+    .catch(err => {
+      if (err.name === 'BadNumberError') {
+        return self._timedState('badPhoneNumber')
+      }
+
+      console.log(err.stack)
+      return this._fiatError(err)
+    })
+}
+
 
 
 Brain.prototype._sendSecurityCode = function _sendSecurityCode (number) {

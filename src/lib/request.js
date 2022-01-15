@@ -1,7 +1,7 @@
 // for now, make this b/w compat with trader.js calls
 
 // const axios = require('axios');
-import {fetch} from 'react-native-ssl-pinning';
+import {fetch as RNSPFetch} from 'react-native-ssl-pinning';
 
 const axiosRetry = require('axios-retry')
 
@@ -41,7 +41,8 @@ function request (configVersion, globalOptions, options) {
 
   if (!connectionInfo) return Promise.resolve()
 
-  const host = protocol === 'http:' ? 'localhost' : connectionInfo.host
+  // const host = protocol === 'http:' ? 'localhost' : connectionInfo.host
+  const host = protocol === 'http:' ? '192.168.1.7' : connectionInfo.host
   const requestId = uuid.v4()
   const date = new Date().toISOString()
   const headers = {date, 'request-id': requestId}
@@ -89,7 +90,7 @@ function request (configVersion, globalOptions, options) {
 
   // console.log(fetchOptions);
 
-  return fetch(baseURL + options.path, fetchOptions)
+  return RNSPFetch(baseURL + options.path, fetchOptions)
   .then(r => {return r.json()})
   .then(r => {
     return {body: r}

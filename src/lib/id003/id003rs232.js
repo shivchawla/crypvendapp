@@ -8,7 +8,7 @@ import { NativeEventEmitter, NativeModules } from 'react-native';
 var EventEmitter = require('events').EventEmitter
 var util = require('util')
 // var fs = require('fs')
-var RNFS = require('react-native-fs')
+var RNFS = require('react-native-file-access')
 var async = require('async')
 var Crc = require('./crc')
 const Buffer = require('buffer/').Buffer;

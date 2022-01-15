@@ -1,6 +1,6 @@
 const _ = require('lodash/fp')
 const pify = require('pify')
-const RNFS = require('react-native-fs')
+const RNFS = require('react-native-file-access')
 const uuid = require('uuid')
 const path = require('path')
 
@@ -11,16 +11,16 @@ let dbName
 module.exports = {save, prune}
 
 function list (dbRoot) {
-  return RNFS.mkdir(dbRoot)
+  return RNFS.FileSystem.mkdir(dbRoot)
     .catch(() => {})
-    .then(() => RNFS.readdir(dbRoot))
+    .then(() => RNFS.FileSystem.ls(dbRoot))
 }
 
 function rotate (dbRoot) {
   dbName = 'tx-db-' + uuid.v4() + '.dat'
-  return RNFS.mkdir(dbRoot)
+  return RNFS.FileSystem.mkdir(dbRoot)
     .catch(() => {})
-    .then(() => RNFS.writeFile(path.resolve(dbRoot, dbName), ''))
+    .then(() => RNFS.FileSystem.writeFile(path.resolve(dbRoot, dbName), ''))
 }
 
 function save (dbRoot, tx) {
@@ -28,11 +28,11 @@ function save (dbRoot, tx) {
   // console.log(path.resolve(dbRoot, dbName));
   // console.log(JSON.stringify(tx));
 
-  return RNFS.appendFile(path.resolve(dbRoot, dbName), JSON.stringify(tx) + '\n')
+  return RNFS.FileSystem.appendFile(path.resolve(dbRoot, dbName), JSON.stringify(tx) + '\n')
 }
 
 function nuke (dbPath) {
-  return RNFS.unlink(dbPath)
+  return RNFS.FileSystem.unlink(dbPath)
 }
 
 function safeJsonParse (txt) {
@@ -95,7 +95,7 @@ function massage (tx) {
 function load (dbPath) {
   const txTable = {}
 
-  return RNFS.readFile(dbPath, 'utf8')
+  return RNFS.FileSystem.readFile(dbPath, 'utf8')
     .then(f => {
       console.log("Read File");
       console.log(dbPath);

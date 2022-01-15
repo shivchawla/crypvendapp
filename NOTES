@@ -1,3 +1,23 @@
+"reload":"adb shell input keyevent 82 && adb shell input keyevent 66 && adb shell input keyevent 66",
+ "devmenu":"adb shell input keyevent 82",
+ "debug":"adb shell input keyevent 82 && adb shell input keyevent 61 && adb shell input keyevent 66 && adb shell input keyevent 66"
+
+
+
+IMPORTANT CONSIDERATIONS WHEN RUNNING APP
+
 1. Metro.config,js has to be modified to prevent duplicated as web directoy includes node_modules and it was leading to duplicates to node_modules
+
 2. Add browser specific buffer module to make it work in react-native ``require('buffer/').Buffer``;
-3.
+
+3. react-native-ssl-pinning related error; 
+Canceled due to java.lang.NoSuchMethodError: No virtual method log(ILjava/lang/String;Ljava/lang/Throwable;)V in class Lokhttp3/internal/platform/Platform;
+Fix: https://github.com/MaxToyberman/react-native-ssl-pinning/issues/132
+
+4. Is SSL pinning even used, looking at the current code, disableAllSecurityFlag is true which means NO ssl/public key pinning is active; WHY is it in use yet;
+
+5. When using in dev mode, lamassu-server needs to be started with --dev flag to prevent http request in https environment
+
+6. There is no browser in case of react-native app, so lamassu-machine browser Events is replace by browserEmit (which is just a mechanism to emit events to other parts of app)
+
+

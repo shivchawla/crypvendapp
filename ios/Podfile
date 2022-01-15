@@ -12,6 +12,9 @@ target 'CrypVendApp' do
     :hermes_enabled => false
   )
 
+  pod 'RNSslPinning', :path => '../node_modules/react-native-ssl-pinning'
+
+
   target 'CrypVendAppTests' do
     inherit! :complete
     # Pods for testing
