@@ -1,0 +1,13 @@
+diff --git a/node_modules/react-native-ssl-pinning/android/src/main/java/com/toyberman/RNSslPinningModule.java b/node_modules/react-native-ssl-pinning/android/src/main/java/com/toyberman/RNSslPinningModule.java
+index 6fb4c84..9652ffe 100644
+--- a/node_modules/react-native-ssl-pinning/android/src/main/java/com/toyberman/RNSslPinningModule.java
++++ b/node_modules/react-native-ssl-pinning/android/src/main/java/com/toyberman/RNSslPinningModule.java
+@@ -213,7 +213,7 @@ public class RNSslPinningModule extends ReactContextBaseJavaModule {
+                     //build response headers map
+                     WritableMap headers = buildResponseHeaders(okHttpResponse);
+                     //set response status code
+-                    response.putInt("status", okHttpResponse.code());
++                    response.putInt("statusCode", okHttpResponse.code());
+                     if (options.hasKey(RESPONSE_TYPE)) {
+                         responseType = options.getString(RESPONSE_TYPE);
+                     }

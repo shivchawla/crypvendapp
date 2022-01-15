@@ -20,4 +20,5 @@ Fix: https://github.com/MaxToyberman/react-native-ssl-pinning/issues/132
 
 6. There is no browser in case of react-native app, so lamassu-machine browser Events is replace by browserEmit (which is just a mechanism to emit events to other parts of app)
 
+7. In OKHTTPS from react-native pinning, output has "status" and not "statusCode", Use npx patch-package to modify the output to "statusCode"
 
