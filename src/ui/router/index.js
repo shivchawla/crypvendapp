@@ -30,6 +30,7 @@ import RequestConfirmation from '../screens/requestConfirmation';
 import TransactionSuccess from '../screens/transactionSuccess';
 import SelectLanguage from '../screens/selectLanguage';
 import TransactionList from '../screens/transactionList';
+import AcceptBills from '../screens/acceptBills';
 
 import {processData} from '../store';
 import { utils as coinUtils } from 'lamassu-coins'
@@ -178,9 +179,15 @@ class Router extends Component {
                 }); 
                 break;
 
+            case "scanned":    
             case "acceptingFirstBill":
-                this.navRef.navigate("enterFiat", {});
-                break;      
+                // this.navRef.navigate("enterFiat", {});
+                this.navRef.navigate('status', {
+                    loading: false, error: false, 
+                    message: 'Accepting Bills', 
+                    subMessages: ['Keep adding more bills'],
+                });
+                break;
 
             case "permission_id":
                 this.navRef.navigate("compliance", {

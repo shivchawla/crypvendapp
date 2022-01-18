@@ -2,12 +2,13 @@ const _ = require('lodash/fp')
 const uuid = require('uuid')
 
 const BN = require('./bn')
-const { utils: coinUtils } = require('lamassu-coins')
+// const { utils: coinUtils } = require('lamassu-coins')
+const coinUtils = require('./coins/utils')
 // const BillMath = require('./bill_math')
 
 const DECIMAL_PLACES = 3
 
-// const coins = coinUtils.coins
+const coins = coinUtils.coins
 
 // This function rounds precision so that the displayed amount matches
 // amount actually sent.
@@ -18,18 +19,15 @@ function truncateCrypto (cryptoAtoms, cryptoCode) {
 
   if (cryptoAtoms.eq(0)) return cryptoAtoms
 
-  const scale = coinUtils.getCryptoCurrency(cryptoCode).displayScale
+  const scale = coins[cryptoCode].displayScale
   const scaleFactor = BN(10).pow(scale)
 
   // console.log("BN Crypto Atoms")
   // console.log(BN(cryptoAtoms));
 
-  //In newer version of BN librarary, truncated is not supported
-  // return BN(cryptoAtoms).truncated().div(scaleFactor)
-  //   .precision(DECIMAL_PLACES).times(scaleFactor)
+  return BN(cryptoAtoms).truncated().div(scaleFactor)
+    .round(DECIMAL_PLACES).times(scaleFactor)
 
-  return BN(cryptoAtoms).integerValue().div(scaleFactor)
-    .precision(DECIMAL_PLACES).times(scaleFactor)    
 }
 
 function mergeTx (oldTx, updateTx) {
@@ -48,7 +46,7 @@ function mergeTx (oldTx, updateTx) {
     bills,
     fiat: updateTx.fiat ? oldTx.fiat.plus(updateTx.fiat) : oldTx.fiat,
     cryptoAtoms: truncateCrypto(
-      _.reduce((acc, v) => acc.plus(toCrypto(mergedTx, BN(v.fiat - v.cashInFee))), BN(0), bills),
+      _.reduce((acc, v) => acc.plus(toCrypto(mergedTx, BN(v.fiat).minus(v.cashInFee))), BN(0), bills),
       cryptoCode),
     cashInFeeCrypto: truncateCrypto(toCrypto(mergedTx, cashInFee), cryptoCode)
   })
@@ -72,7 +70,7 @@ function getExchangeRate (tx) {
   const cryptoCode = tx.cryptoCode
   const rates = getRates(tx)
   const exchangeRate = rates[cryptoCode][tx.direction]
-  const unitScale = coinUtils.getCryptoCurrency(cryptoCode).unitScale
+  const unitScale = coins[cryptoCode].unitScale
   const unitScaleFactor = BN(10).pow(unitScale)
 
   return exchangeRate.div(unitScaleFactor)
@@ -91,8 +89,8 @@ function getRates (tx) {
   const rates = cryptoCode ? {
     [cryptoCode]: {
       [direction]: (direction === 'cashIn')
-        ? tickerPrice.multipliedBy(discount).precision(5)
-        : tickerPrice.div(discount).precision(5)
+        ? tickerPrice.mul(discount).round(5)
+        : tickerPrice.div(discount).round(5)
     }
   } : {}
 
@@ -114,7 +112,10 @@ function getDiscountRate (discount, commissionPercentage) {
   const discountBN = discount ? BN(discount) : BN(0)
   const percentageCommissionBN = commissionPercentage ? BN(commissionPercentage) : BN(0)
   const percentageDiscount = BN(1).minus(discountBN.div(100))
-  return BN(1).plus(percentageDiscount.multipliedBy(percentageCommissionBN))
+
+  console.log(percentageDiscount);
+
+  return BN(1).plus(percentageDiscount.mul(percentageCommissionBN))
 }
 
 function isBillsEq (a, b, k) {
@@ -207,7 +208,7 @@ function createBillDeprecated (bill, exchangeRate, tx) {
 
   const applyCashInFee = _.isEmpty(tx.bills)
   const cryptoCode = tx.cryptoCode
-  const unitScale = coinUtils.getCryptoCurrency(cryptoCode).unitScale
+  const unitScale = coins[cryptoCode].unitScale
   const unitScaleFactor = BN(10).pow(unitScale)
   const atomRate = exchangeRate.div(unitScaleFactor)
   const fiatCode = tx.fiatCode
@@ -266,10 +267,10 @@ function addCash (denomination, tx) {
 
 function addCashDeprecated (denomination, exchangeRate, tx) {
   const cryptoCode = tx.cryptoCode
-  const unitScale = coinUtils.getCryptoCurrency(cryptoCode).unitScale
+  const unitScale = coins[cryptoCode].unitScale
   const unitScaleFactor = BN(10).pow(unitScale)
   const fiat = BN(denomination)
-  const cryptoAtoms = truncateCrypto(fiat.div(exchangeRate).multipliedBy(unitScaleFactor), cryptoCode)
+  const cryptoAtoms = truncateCrypto(fiat.div(exchangeRate).mul(unitScaleFactor), cryptoCode)
 
   return update(tx, { fiat, cryptoAtoms })
 }

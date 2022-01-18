@@ -290,9 +290,7 @@ Id003Rs232.prototype._parse = function _parse (packet) {
   // console.log(data);
   var commandCode = packet[2]
 
-  // console.log("Command Code", commandCode);
-
-
+  console.log("Command Code", commandCode);
 
   this._interpret(commandCode, data)
 }
@@ -301,7 +299,7 @@ Id003Rs232.prototype._interpret = function _interpret (commandCode, rawData) {
   var command = RSP[commandCode]
 
   // if (command != 'enq') {
-    // console.log("Response Command: ", command);
+    console.log("Response Command: ", command);
     // console.log(rawData);
     // console.log(rawData ? rawData.toString('hex') : rawData);
   // }
@@ -353,6 +351,10 @@ Id003Rs232.prototype._denominations = function _denominations (rawData) {
     var denomination = denominationInteger * Math.pow(10, denominationExponent)
     this.denominations[escrowCode] = denomination
   }
+
+  console.log("Denominations")
+  console.log(this.denominations);
+  
 }
 
 Id003Rs232.prototype._enabled = function _enabled (rawData) {
@@ -393,7 +395,7 @@ Id003Rs232.prototype._processPacket = function _processPacket () {
   this.buf = this.buf.slice(responseSize)
 
   try {
-    // console.log("Parse Packet");
+    console.log("Parse Packet");
     this._parse(packet)
   } catch (ex) {
     console.dir(ex)

@@ -10,7 +10,7 @@
     },
     "mockCameraImage": "mock_data/compliance/license.jpg"
   },
-  "cryptomatModel": "gaia",
+  "cryptomatModel": "POS",
   "wifi": {
     "wpa": {
       "socket": null

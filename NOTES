@@ -22,3 +22,7 @@ Fix: https://github.com/MaxToyberman/react-native-ssl-pinning/issues/132
 
 7. In OKHTTPS from react-native pinning, output has "status" and not "statusCode", Use npx patch-package to modify the output to "statusCode"
 
+6. bignumber.js is still very old version v4.0.1; Keep using it;
+
+
+

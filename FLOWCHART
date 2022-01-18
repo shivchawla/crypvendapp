@@ -1,0 +1,37 @@
+1. From chooseCoin Screen => message event with 'start' and 'cryptoCode'
+2. 'start' message is processed in brain by calling brain's chooseCoin and initializating the transactions; End in calling StartScreen/ _start function;
+3. In _start, the transaction is updated;
+   In case of POS, brain trigger checkBalance state 
+   In case of SELF CHECKOUT, logic moves to scanning after smsCompliance;
+
+4. In case of POS, enterFiat screen is triggered (as a result of check Balance)
+   In case of SELF, address scanning is launched;
+
+5. In case of POS, 'fiatValidate' message is triggered on selecting amount;
+
+6. 'fiatValidate' is handled in brain's  _handleFiatInput function;
+
+6a. *** Here a pseudo bill is created ***;
+and this bill is compared against crypto balances; minimum transaction amount; 
+
+6b. If check are failed, bill is rejected; transaction error (lowBalance) or minimumTx action is launched;
+
+6c. If there are no issues, then compliance is launched based on amount enteredl ********** CHECK LOGIC AGAIN;
+
+
+
+
+-----------SELF-CHECKOUT-----------------------
+
+5. After scanning the address, 'scanned' browser event is called;
+   BillValidator is enabled to accept cash (Timeout is set to idle if no bills are added;)
+
+6. On Adding Bills, billRead is called in which balances/minimumTx/compliance are checked in order accept and reject the bill; 
+
+6a. Bill is rejected and coins are transferred if no more fiat can't be accepted
+6b. Compliance check are run based on KYC requirements
+6b. If bill is accepted, and the process CONTINUES
+
+7. After a time out in case of rejected bill (or user request), coins are transferred;
+
+8. 

@@ -4,8 +4,7 @@ const path = require('path')
 const semver = require('semver')
 const _ = require('lodash/fp')
 const minimist = require('minimist')
-// const Rx = require('rxjs/Rx')
-const Rx = require('rxjs')
+const Rx = require('rxjs/Rx')
 const pify = require('pify')
 const pDelay = require('delay')
 const pAny = require('p-any')
@@ -64,12 +63,6 @@ const NETWORK_TIMEOUT_INTERVAL = 20000
 const MIN_WAITING = 500
 const STATUS_QUERY_TIMEOUT = 2000
 
-// console.log("Serial Port");
-// var SerialPort = require('react-native-serial-port-api').default;
-var SerialPort = require('react-native-usb-serialport').RNSerialport;
-
-// console.log(SerialPort);
-
 const Brain = function (config) {
   if (!(this instanceof Brain)) return new Brain(config)
 
@@ -78,9 +71,6 @@ const Brain = function (config) {
 
   this.bootTime = Date.now()
 
-  // ExternalStorageDirectoryPath
-  // DocumentDirectoryPath
-  // this.dataPath = RNFS.ExternalStorageDirectoryPath + '/Android/data/com.crypvendapp/files/'; //path.resolve(__dirname, '..', this.config.dataPath)
   this.dataPath = path.resolve(RNFS.Dirs.DocumentDir); //path.resolve(__dirname, '..', this.config.dataPath)
   console.log("DataPath: ", this.dataPath);
 
@@ -133,6 +123,7 @@ const Brain = function (config) {
   this.beforeIdleState = true
   this.scannerTimeout = null
   this.routerRef = null;
+  this.transactionType = 'cash';
 }
 
 const EventEmitter = require('events').EventEmitter
@@ -239,6 +230,7 @@ Brain.prototype.run = async function run() {
   const self = this
   this._init();
 
+  //Messages sent from React-Native UI
   actionEmitter.on('message', function (req) { self._processRequest(req) })
 
   // console.log("Run: Initialized. Calling _connectedBrowser");
@@ -356,7 +348,9 @@ Brain.prototype.checkWifiStatus = function checkWifiStatus () {
 
 Brain.prototype._init = function init () {
   this._initBrainEvents()
-  this._initBillValidatorEvents();
+  if (this.transactionType == 'cash') {
+    this._initBillValidatorEvents();
+  }
   this._initActionEvents()
 }
 
@@ -1169,7 +1163,7 @@ Brain.prototype.getTransactions = function getTransactions (query) {
 
     const massage = (tx) => {
       const cashInCommission = BN(1).plus(BN(tx.commissionPercentage))
-      const rate = BN(tx.rawTickerPrice).multipliedBy(cashInCommission).precision(2);
+      const rate = BN(tx.rawTickerPrice).mul(cashInCommission).round(2);
 
       const date = tx.sendTime ? moment.tz('America/Guatemala').format('YYYY-MM-DD HH:mm:ss')  : null;
 
@@ -1923,6 +1917,36 @@ Brain.prototype.complianceAmount = function complianceAmount () {
 }
 
 
+/**
+ * Handler to show in screen whether or not the user
+ * is allowed to proceed inserting bills or forced to
+ * click the send button.
+ *
+ * Two reasons provided:
+ *
+ *  1. Transaction limit
+ *  2. Low balance
+ *
+ */
+Brain.prototype.completeBillHandling = function completeBillHandling (blockedCustomer) {
+  // Available cryptocurrency balance expressed in fiat
+  const availableCryptoAsFiat = this.balance().sub(this.tx.fiat)
+  const highestBill = this.billValidator.highestBill(availableCryptoAsFiat)
+  const hasLowBalance = highestBill.lte(0)
+
+  if (hasLowBalance || blockedCustomer) {
+    this.disableBillValidator()
+  }
+
+  browserEmit({
+    credit: this._uiCredit(),
+    sendOnly: hasLowBalance || blockedCustomer,
+    reason: blockedCustomer ? 'blockedCustomer' : false,
+    cryptoCode: this.tx.cryptoCode
+  })
+}
+
+
 //Called after sending rates - part of step 2
 Brain.prototype.startScreen = function startScreen () {
   const direction = this.tx.direction
@@ -1998,7 +2022,6 @@ Brain.prototype._setLocale = function _setLocale (data) {
 
 Brain.prototype.isLowBalance = function isLowBalance () {
   const fiatBalance = this.balance()
-  // const highestBill = this.billValidator.highestBill(fiatBalance)
   const highestBill = getHighestBill(fiatBalance)
 
   return highestBill.lt(0)
@@ -2047,9 +2070,26 @@ Brain.prototype._start = function _start () {
   const update = _.assignAll([this.tx, updateRec])
   this.tx = Tx.update(this.tx, update)
 
-  //INstead of calling start Address Scan, we should first get Fiat input to check balance
-  //this._startAddressScan()
-  this._startBalanceCheck();
+  //If transaction type is cash, 
+  // continue with compliance
+  //else continue with balance check 
+  if (this.transactionType == 'cash') {
+    const amount = this.complianceAmount()
+    const triggerTx = { fiat: amount, direction: this.tx.direction}
+
+    const nonCompliantTiers = this.nonCompliantTiers(this.trader.triggers, this.customerTxHistory, triggerTx)
+    const isCompliant = _.isEmpty(nonCompliantTiers)
+
+    if (!isCompliant) {
+      return this.smsCompliance()
+    }
+    
+    this._startAddressScan()  
+  
+  } else {
+    this._startBalanceCheck();
+  }
+  
   browserEmit({tx: this.tx})
 }
 
@@ -2150,19 +2190,20 @@ Brain.prototype._previewRates = function _previewRates () {
   }
 }
 
+
+//Scannning is handles by front-end in android
+//After reading the code, _handleAddressScan is called
 Brain.prototype._startAddressScan = function _startAddressScan () {
   this._transitionState('scanAddress')
 }
 
-//THis is new function..Originally part of _startAddressScan
+//This is new function..Originally part of _startAddressScan
 //Because in POS Scanning is handled by UI component
 Brain.prototype._handleAddressScan = function _handleAddressScan ({address}) {
   console.log("In Handle Address Scan");
   console.log(address);
 
   const txId = this.tx.id
-
-  // if (this.hasNewScanBay()) this.scanBayLightOn()
 
   //Validate the QR code
   const network = 'main';
@@ -2420,14 +2461,15 @@ Brain.prototype._handleScan = function _handleScan (address) {
       setTimeout(() => {
 
         //Modified by Shiv
-        if (this.bill) {
+        if (this.bill && this.transactionType != 'cash') {
           //Also, need to provide a return state to smsCompliace otherwise it goes to start screen
           // return this.smsCompliance();
           // return this._continueSmsCompliance();
           return this._startCompliance();
-        }
+        } 
 
-        return this._firstBill()
+        return this._firstBill();
+
       }, remaining)
     })
 }
@@ -2463,7 +2505,6 @@ Brain.prototype._firstBill = function _firstBill () {
 }
 
 // Bill validating states
-
 Brain.prototype._billInserted = function _billInserted () {
   emit('billValidatorAccepting')
   browserEmit({action: 'acceptingBill'})
@@ -2488,16 +2529,29 @@ Brain.prototype._billRead = function _billRead (data) {
     return billValidator.reject()
   }
 
+  console.log("Bill Read Data");
+  console.log(data);
+
   this.insertBill(data.denomination)
+
+  console.log("WTF-10");
 
   // Current inserting bill
   const currentBill = this.bill.fiat
 
+  console.log("WTF-11");
+
   // Current transaction's fiat not including current bill
   const fiatBeforeBill = this.tx.fiat
 
+  console.log("WTF-12");
+  console.log("Fiat Before Bill");
+  console.log(fiatBeforeBill);
+
   // Total fiat inserted including current bill
   const fiatAfterBill = fiatBeforeBill.add(currentBill)
+
+  console.log("WTF-13");
 
   // Limit next bills by failed compliance value
   // if value is null it was triggered by velocity or consecutive days
@@ -2506,8 +2560,15 @@ Brain.prototype._billRead = function _billRead (data) {
   // Available cryptocurrency balance expressed in fiat not including current bill
   const remainingFiatToInsert = BN.klass.min(this.balance(), failedTierThreshold).sub(fiatBeforeBill)
 
+
+  console.log("WTF-14");
+
   // Minimum allowed transaction
   const minimumAllowedTx = this.tx.minimumTx
+
+
+  console.log("WTF-100");
+
 
   if (remainingFiatToInsert.lt(currentBill)) {
     billValidator.reject()
@@ -2553,6 +2614,8 @@ Brain.prototype._billRead = function _billRead (data) {
   const nonCompliantTiers = this.nonCompliantTiers(this.trader.triggers, this.customerTxHistory, triggerTx)
   const isCompliant = _.isEmpty(nonCompliantTiers)
 
+  console.log("Checking Compliance");
+
   // If threshold is 0,
   // the sms verification is being handled at the beginning of this.startScreen.
   if (!isCompliant) {
@@ -2578,24 +2641,23 @@ Brain.prototype._billRead = function _billRead (data) {
 }
 
 
-function getHighestBill (fiat) {
+function getHighestBill (fiatBalance) {
   console.log("Get Highest Bill");
-  // const bills = _.values(null)
-  // const filtered = bills.filter(bill => fiat.gte(bill))
-  // if (_.isEmpty(filtered)) return BN(-Infinity)
-  return BN(fiat);
+  if (this.transactionType == 'cash') {
+    return this.billValidator.highestBill(fiatBalance);
+  } else return BN(fiatBalance);
 }
 
 function getLowestBill (fiat) {
   console.log("Get Lowest Bill");
-  // const bills = _.values(null);
-  // const filtered = bills.filter(bill => fiat.lte(bill))
-  // if (_.isEmpty(filtered)) return BN(_.min(bills))
-  // return BN(_.min(filtered))
-  return BN("1")
+  if (this.transactionType == 'cash') {
+    return this.billValidator.lowestBill(fiatBalance);
+  } else return BN("1")
 }
 
 
+//In case of POS, fiat input is considered a bill insert;
+//This could be tricky... as it's not a real bill
 //Instead of Bill Read, write logic to check fiat amount before vending
 Brain.prototype._handleFiatInput = function _handleFiatInput (data) {
 
@@ -2617,7 +2679,6 @@ Brain.prototype._handleFiatInput = function _handleFiatInput (data) {
 
   //Reject if balance not available 
   if (remainingFiatToInsert.lt(0)) {
-    // billValidator.reject()
     this._billRejected();
 
     console.log('DEBUG: low balance, attempting disable')
@@ -2631,10 +2692,8 @@ Brain.prototype._handleFiatInput = function _handleFiatInput (data) {
   }
 
   if (currentBill.lt(minimumAllowedTx)) {
-    // billValidator.reject()
     this._billRejected();
 
-    // const lowestBill = billValidator.lowestBill(minimumAllowedTx)
     const lowestBill = getLowestBill(minimumAllowedTx);
 
     browserEmit({
@@ -2648,13 +2707,11 @@ Brain.prototype._handleFiatInput = function _handleFiatInput (data) {
   //Before compliance triggers, check for address -- Added by Shiv 
   if (data.reason == "checkBalance" || !this.tx.toAddress) {
   
-    //But bill is not rejected yet! so this.bill is not null   (this information can be used to route after scanning)
-    
+    //But bill is not rejected yet! so this.bill is not null (this information can be used to route after scanning)
     return this._previewRates()
-    // return this._startAddressScan();
   }
 
-  const amount = currentBill; //fiatBeforeBill.plus(currentBill)
+  const amount = currentBill;
   const triggerTx = { fiat: amount, direction: this.tx.direction}
 
   const nonCompliantTiers = this.nonCompliantTiers(this.trader.triggers, this.customerTxHistory, triggerTx)
@@ -2867,7 +2924,7 @@ Brain.prototype.updateBillScreen = function updateBillScreen (blockedCustomer) {
   this.lastRejectedBillFiat = BN(0)
 
   emit('billValidatorPending')
-
+``
   var billUpdate
   // BACKWARDS_COMPATIBILITY 7.5.0-beta.1
   const serverVersion = this.trader.serverVersion
@@ -2903,7 +2960,7 @@ Brain.prototype._billRejected = function _billRejected () {
       ? self._idle()
       : self._sendCoins()
   }, this.config.billTimeout)
-
+``
   const response = {
     action: 'rejectedBill',
     credit: this._uiCredit()
@@ -2982,6 +3039,9 @@ Brain.prototype.insertBill = function insertBill (bill) {
 
     console.log("Tx.createBill - 2");
     this.bill = Tx.createBill(bill, this.tx)
+
+    console.log("After Bill Creation");
+    console.log(this.bill);
   }
 }
 
@@ -3131,7 +3191,7 @@ Brain.prototype._cashInComplete = function _cashInComplete () {
 Brain.prototype._getReceipt = function _getReceipt (tx) {
   const cashInCommission = BN(1).plus(BN(tx.commissionPercentage))
 
-  const rate = BN(tx.rawTickerPrice).multipliedBy(cashInCommission).precision(2)
+  const rate = BN(tx.rawTickerPrice).mul(cashInCommission).round(2)
   
   //This is fine for current transaction but what about earlier transaction
   // const date = new Date()
@@ -3165,7 +3225,7 @@ Brain.prototype._printReceipt = function _printReceipt () {
 
   const cashInCommission = BN(1).plus(BN(this.tx.commissionPercentage))
 
-  const rate = BN(this.tx.rawTickerPrice).multipliedBy(cashInCommission).precision(2)
+  const rate = BN(this.tx.rawTickerPrice).mul(cashInCommission).round(2)
   const date = new Date()
 
   const offset = this.trader.timezone.dstOffset

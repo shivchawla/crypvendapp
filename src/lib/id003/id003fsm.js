@@ -21,7 +21,7 @@ StateMachine.create({
   target: Id003Fsm.prototype,
   error: function (eventName, from, to, args, errorCode, errorMessage, err) {
     if (err) this.emit('error', err)
-    else console.log('FSM: %s', errorMessage)
+    else console.log('FSM: %s', errorMessage + "WTF")
   },
   events: [
     { name: 'start', from: ['none', 'Failure'], to: 'Start' },
@@ -71,6 +71,7 @@ var TRANSIENT = ['returning', 'stacking', 'stacked', 'accepting', 'rejecting']
 // Reset on power up
 Id003Fsm.prototype.onleavestate = function (event, from, to) {
   clearTimeout(this.stateTimeout)
+  console.log("On Leave State");
   console.log('FSM: %s [ %s -> %s ]', event, from, to)
 }
 

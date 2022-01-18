@@ -3252,7 +3252,7 @@ Brain.prototype._printReceipt = function _printReceipt () {
 
   const cashInCommission = BN(1).plus(BN(this.tx.commissionPercentage))
 
-  const rate = BN(this.tx.rawTickerPrice).multipliedBy(cashInCommission).precision(2)
+  const rate = BN(this.tx.rawTickerPrice).mul(cashInCommission).round(2)
   const date = new Date()
 
   const dateString = `${date.toISOString().replace('T', ' ').slice(0, 19)} UTC`

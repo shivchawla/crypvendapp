@@ -10,8 +10,6 @@ const BN = require('../bn')
 
 const Id003 = function (config) {
 
-  // console.log("ID003");
-  
   EventEmitter.call(this)
   this.initialized = false
   this.pollingInterval = null

@@ -27,7 +27,7 @@ class ScanAddress extends Component {
   }
 
   startScan = () => {
-    const address = "1LEBU9C6y2MaMmuTtJbDDCWpEJxTaT8Dt1";
+    const address = "0xEA674fdDe714fd979de3EdF0F56AA9716B898ec8";
     actionEmitter.emit('message', {button: 'addressScan', data:{address}});
     return;
 
