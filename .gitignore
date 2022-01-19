@@ -58,3 +58,7 @@ buck-out/
 
 # CocoaPods
 /ios/Pods/
+
+#Remove src/lib from github (get it instead from lamassu-machine repo)
+/src/lib
+/src/oldlib
