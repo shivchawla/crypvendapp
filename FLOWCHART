@@ -32,6 +32,6 @@ and this bill is compared against crypto balances; minimum transaction amount;
 6b. Compliance check are run based on KYC requirements
 6b. If bill is accepted, and the process CONTINUES
 
-7. After a time out in case of rejected bill (or user request), coins are transferred;
+7. After a time out in case of rejected bill OR via "updateBillScreen (called on validBill event" OR USER request, coins are transferred 
 
 8. 

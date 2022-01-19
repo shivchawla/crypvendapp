@@ -19,7 +19,7 @@ const commandLine = {};
 
 const operatorInfo = require('./operator-info')
 const sms = require('./compliance/flows/sms')
-const { utils: coinUtils, CRYPTO_CURRENCIES } = require('lamassu-coins')
+const coinUtils = require('./coins/utils')
 
 const pairing = require('./pairing')
 const Tx = require('./tx')
@@ -227,6 +227,7 @@ Brain.prototype.loadBillValidator = function loadBillValidator () {
 
 //First function called when the POS starts
 Brain.prototype.run = async function run() {
+
   const self = this
   this._init();
 
@@ -881,7 +882,6 @@ Brain.prototype._connectedBrowser = function _connectedBrowser () {
       cryptomatModel,
       version,
       operatorInfo: this.trader ? this.trader.operatorInfo : operatorInfo.load(this.dataPath),
-      supportedCoins: CRYPTO_CURRENCIES
     }
 
     return browserEmit(rec)
@@ -894,7 +894,7 @@ Brain.prototype._connectedBrowser = function _connectedBrowser () {
   const _rates = {
     rates: this.trader.rates(cryptoCode),
     cryptoCode: cryptoCode,
-    coins: coinUtils.cryptoCurrencies()
+    coins: Tx.coins
   }
 
   const rates = cryptoCode
@@ -915,7 +915,6 @@ Brain.prototype._connectedBrowser = function _connectedBrowser () {
     operatorInfo: this.trader.operatorInfo,
     cryptomatModel,
     areThereAvailablePromoCodes: this.trader.areThereAvailablePromoCodes,
-    supportedCoins: CRYPTO_CURRENCIES
   }
 
   browserEmit(fullRec)
@@ -2917,14 +2916,16 @@ Brain.prototype._finalizeSale = function _finalizeSale (cardData) {
 
 //IMPORTANT - a copy of this function is called finalizeSale for Credit Card Purchase
 Brain.prototype.updateBillScreen = function updateBillScreen (blockedCustomer) {
+  
+  try {
   const bill = this.bill
 
   // No going back
   this.clearBill()
   this.lastRejectedBillFiat = BN(0)
 
-  emit('billValidatorPending')
-``
+  emit('billValidatorPending');
+
   var billUpdate
   // BACKWARDS_COMPATIBILITY 7.5.0-beta.1
   const serverVersion = this.trader.serverVersion
@@ -2934,12 +2935,16 @@ Brain.prototype.updateBillScreen = function updateBillScreen (blockedCustomer) {
     billUpdate = Tx.billUpdate(bill)
   }
 
+
   return this.fastUpdateTx(billUpdate)
     .then(() => {
       this._transitionState('acceptingBills', { tx: this.tx })
       this._screenTimeout(() => this._sendCoins(), this.config.billTimeout)
     })
     .then(() => this.completeBillHandling(blockedCustomer))
+  } catch (err) {
+    console.log(err)
+  }
 }
 
 // TODO: clean this up
@@ -3123,7 +3128,9 @@ Brain.prototype._doSendCoins = function _doSendCoins () {
   console.log("State");
   console.log(this.state)
 
-  if (this.state !== 'finalizeSale' && !_.includes(this.state, complianceStates)) return
+  if (((this.transactionType == 'cash' && this.state !== 'acceptingBills') || 
+      (this.transactionType  != 'cash' && this.state !== 'finalizeSale')) 
+     && !_.includes(this.state, complianceStates)) return
   
   console.log("In Do Send Coins - 2")  
   return this._executeSendCoins()
@@ -3133,8 +3140,11 @@ Brain.prototype._doSendCoins = function _doSendCoins () {
 Brain.prototype._executeSendCoins = function _executeSendCoins () {
   
   console.log("in _executeSendCoins");  
-  // emit('billValidatorPendingOff')
-  // this.disableBillValidator() -- Not Required in POS
+
+  if(this.transactionType == 'cash') {
+    emit('billValidatorPendingOff')
+    this.disableBillValidator()
+  }
 
   this._verifyTransaction()
 
@@ -3489,8 +3499,8 @@ Brain.prototype._sendSecurityCode = function _sendSecurityCode (number) {
 
 
 Brain.prototype.toCryptoUnits = function toCryptoUnits (cryptoAtoms, cryptoCode) {
-  const unitScale = coinUtils.getCryptoCurrency(cryptoCode).unitScale 
-  return cryptoAtoms.shiftedBy(-unitScale)
+  const unitScale = Tx.coins[cryptoCode].unitScale 
+  return cryptoAtoms.shift(-unitScale)
 }
 
 

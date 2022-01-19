@@ -18,7 +18,7 @@
   },
   "billValidator":{
     "rs232": {
-      "device": "/dev/bus/usb/001/003",
+      "device": "/dev/bus/usb/001/002",
       "fiatCode": "USD"
     }
   }

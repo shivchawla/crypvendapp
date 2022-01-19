@@ -1,6 +1,6 @@
 const _ = require('lodash/fp')
 const Pdf417Parser = require('../compliance/parsepdf417')
-const { utils: coinUtils } = require('lamassu-coins')
+const coinUtils = require('./coins/utils')
 const RNFS = require('react-native-file-access')
 const path = require('path')
 

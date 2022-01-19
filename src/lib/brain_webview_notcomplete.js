@@ -21,7 +21,7 @@ const commandLine = {};
 
 const operatorInfo = require('./operator-info')
 const sms = require('./compliance/flows/sms')
-const { utils: coinUtils } = require('lamassu-coins')
+const coinUtils = require('./coins/utils')
 const pairing = require('./pairing')
 const Tx = require('./tx')
 const BN = require('./bn')

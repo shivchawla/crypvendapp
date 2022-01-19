@@ -2,8 +2,6 @@ import React, { Component } from "react";
 import { StyleSheet, View, Text, Image } from "react-native";
 import { withTranslation } from 'react-i18next';
 
-const { utils: coinUtils } = require('lamassu-coins');
-
 import NextButton from "../components/nextButton";
 import ScreenTitle from "../components/screenTitle";
 import Instruction from '../components/instruction';

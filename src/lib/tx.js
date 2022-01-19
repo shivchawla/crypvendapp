@@ -2,7 +2,6 @@ const _ = require('lodash/fp')
 const uuid = require('uuid')
 
 const BN = require('./bn')
-// const { utils: coinUtils } = require('lamassu-coins')
 const coinUtils = require('./coins/utils')
 // const BillMath = require('./bill_math')
 
