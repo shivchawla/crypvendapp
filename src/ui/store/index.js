@@ -92,6 +92,8 @@ const getLocales = async () => {
   return JSON.parse(await getData('locales'));
 }
 
+
+
 //Is the static information passed every time or once
 //If once, then we need to save all info to local storage
 

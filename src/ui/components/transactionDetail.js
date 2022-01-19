@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { TouchableOpacity, StyleSheet, View, Text, Image } from "react-native";
 
-const { utils: coinUtils } = require('lamassu-coins');
+const coinUtils = require('../../lib/coins/utils')
 
 import DisplayCoin from './displayCoin';
 

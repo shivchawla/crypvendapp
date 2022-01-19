@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { TouchableOpacity, StyleSheet, View, Text, Image } from "react-native";
 
-const { utils: coinUtils, CRYPTO_CURRENCIES } = require('lamassu-coins');
+const coinUtils = require('../../lib/coins/utils');
 
 const cryptoImages = {
   'BTC': require('../assets/images/btc.png'),
@@ -12,6 +12,15 @@ const cryptoImages = {
   'LTC': require('../assets/images/ltc.png')
 };
 
+const CRYPTO_CURRENCIES = [
+  {cryptpCode: 'BTC' , display: 'Bitcoin'},
+  {cryptpCode: 'ETH', display: 'Ethereum'},
+  {cryptpCode: 'DASH', display: 'Dash'},
+  {cryptpCode: 'BCH', display: 'Bitcoin Cash'},
+  {cryptpCode: 'ZEC', display: 'ZCash'},
+  {cryptpCode: 'LTC', display: 'Litecoin'}
+];
+  
 
 class DisplayCoin extends Component {
 	render() {

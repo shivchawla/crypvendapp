@@ -33,7 +33,6 @@ import TransactionList from '../screens/transactionList';
 import AcceptBills from '../screens/acceptBills';
 
 import {processData} from '../store';
-import { utils as coinUtils } from 'lamassu-coins'
 import {serverStart} from '../server';
 
 const actionEmitter = require('../../lib/action-emitter');
@@ -61,6 +60,8 @@ class Router extends Component {
 
         console.log("in Handle Nav Event");
         console.log(data);
+
+        console.log("Process Action in FE: ", data.action);
 
         await processData(data);
 
@@ -181,12 +182,9 @@ class Router extends Component {
 
             case "scanned":    
             case "acceptingFirstBill":
+            case "acceptingBills":
                 // this.navRef.navigate("enterFiat", {});
-                this.navRef.navigate('status', {
-                    loading: false, error: false, 
-                    message: 'Accepting Bills', 
-                    subMessages: ['Keep adding more bills'],
-                });
+                this.navRef.navigate("acceptBills", {credit: data.credit});
                 break;
 
             case "permission_id":
@@ -268,6 +266,7 @@ class Router extends Component {
                     <Stack.Screen options={headeroptions} name="chooseCoin" component={ChooseCoin} />
                     <Stack.Screen options={headeroptions} name="scanAddress" component={ScanAddress} />
                     <Stack.Screen options={headeroptions} name="enterFiat" component={EnterFiat} />
+                    <Stack.Screen options={headeroptions} name="acceptBills" component={AcceptBills} />
                     <Stack.Screen options={headeroptions} name="previewPurchase" component={PreviewPurchase} />
                     <Stack.Screen options={headeroptions} name="compliance" component={ComplianceRequest} />
                     <Stack.Screen options={headeroptions} name="registerPhone" component={RegisterPhone} />

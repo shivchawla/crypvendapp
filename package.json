@@ -29,6 +29,7 @@
     "react": "17.0.2",
     "react-i18next": "^11.15.3",
     "react-native": "0.66.4",
+    "react-native-async-storage-listener": "^1.0.5",
     "react-native-camera": "^4.2.1",
     "react-native-country-picker-modal": "^2.0.0",
     "react-native-file-access": "^2.1.0",
